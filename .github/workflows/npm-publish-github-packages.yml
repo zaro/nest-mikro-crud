@@ -29,7 +29,11 @@ jobs:
       - name: Build 🔨
         run: yarn build
         
-      - name: Publish 🔼
-        uses: simenandre/publish-with-yarn@v2.0.0
+      - name: Set registry URL to GPR
+        uses: actions/setup-node@v4
         with:
-          npm-auth-token: ${{secrets.GITHUB_TOKEN}}
+          registry-url: 'https://npm.pkg.github.com'
+      - name: Publish 🔼
+        run: yarn publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
