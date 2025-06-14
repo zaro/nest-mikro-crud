@@ -33,6 +33,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           registry-url: 'https://npm.pkg.github.com'
+          scope: '@zaro'
       - name: Publish 🔼
         run: yarn publish
         env:
