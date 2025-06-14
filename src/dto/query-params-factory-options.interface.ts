@@ -1,7 +1,8 @@
+import { AutoPath, FindOptions, Populate } from "@mikro-orm/core";
 import {
   FilterQueryParam,
   OrderQueryParam,
-  RelationPath,
+  PopulateParameters,
   ScalarPath,
 } from "../types";
 
@@ -23,7 +24,7 @@ export interface QueryParamsFactoryOptions<Entity> {
     default?: FilterQueryParam<Entity>[];
   };
   expand?: {
-    in: RelationPath<Entity>[];
-    default?: RelationPath<Entity>[];
+    in: PopulateParameters<Entity>;
+    default?: PopulateParameters<Entity>;
   };
 }

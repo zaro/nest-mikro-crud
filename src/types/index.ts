@@ -6,3 +6,4 @@ export * from "./order-query-param.type";
 export * from "./pk-type.type";
 export * from "./relation-path.type";
 export * from "./scalar-path.type";
+export * from "./populate-param.type";

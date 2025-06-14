@@ -1,26 +1,29 @@
-import { EntityRepository, ReferenceType } from "@mikro-orm/core";
+import { EntityRepository, ReferenceKind, wrap } from '@mikro-orm/core';
 import {
   AnyEntity,
+  AutoPath,
   EntityData,
-  NonFunctionPropertyNames,
-} from "@mikro-orm/core/typings";
-import { InjectRepository } from "@mikro-orm/nestjs";
-import { Type } from "@nestjs/common";
-import { AbstractFactory } from "../abstract.factory";
-import { FACTORY } from "../symbols";
-import { MikroCrudServiceFactoryOptions } from "./mikro-crud-service-factory-options.interface";
-import { MikroCrudService } from "./mikro-crud-service.class";
+  EntityKey,
+  Populate,
+  RequiredEntityData,
+} from '@mikro-orm/core/typings';
+import { InjectRepository } from '@mikro-orm/nestjs';
+import { Type } from '@nestjs/common';
+import { AbstractFactory } from '../abstract.factory';
+import { FACTORY } from '../symbols';
+import { MikroCrudServiceFactoryOptions } from './mikro-crud-service-factory-options.interface';
+import { MikroCrudService } from './mikro-crud-service.class';
 
 export class MikroCrudServiceFactory<
   Entity extends AnyEntity<Entity> = any,
-  CreateDto extends EntityData<Entity> = EntityData<Entity>,
-  UpdateDto extends EntityData<Entity> = EntityData<Entity>
+  CreateDto extends RequiredEntityData<Entity> = RequiredEntityData<Entity>,
+  UpdateDto extends EntityData<Entity> = EntityData<Entity>,
 > extends AbstractFactory<MikroCrudService<Entity, CreateDto, UpdateDto>> {
   readonly options;
   readonly product;
 
   constructor(
-    options: MikroCrudServiceFactoryOptions<Entity, CreateDto, UpdateDto>
+    options: MikroCrudServiceFactoryOptions<Entity, CreateDto, UpdateDto>,
   ) {
     super();
     this.options = this.standardizeOptions(options);
@@ -29,7 +32,7 @@ export class MikroCrudServiceFactory<
   }
 
   protected standardizeOptions(
-    options: MikroCrudServiceFactoryOptions<Entity, CreateDto, UpdateDto>
+    options: MikroCrudServiceFactoryOptions<Entity, CreateDto, UpdateDto>,
   ) {
     return options;
   }
@@ -39,15 +42,16 @@ export class MikroCrudServiceFactory<
 
     class Service extends MikroCrudService<Entity, CreateDto, UpdateDto> {
       @InjectRepository(entityClass)
-      readonly repository!: EntityRepository<Entity>;
-      readonly collectionFields = new entityClass()
-        .__helper!.__meta.relations.filter(
-          ({ reference, hidden }) =>
+      declare readonly repository: EntityRepository<Entity>;
+
+      readonly collectionFields : Populate<Entity> = wrap(new entityClass(), true)
+        .__meta.relations.filter(
+          ({ kind, hidden }) =>
             !hidden &&
-            (reference == ReferenceType.ONE_TO_MANY ||
-              reference == ReferenceType.MANY_TO_MANY)
+            (kind == ReferenceKind.ONE_TO_MANY ||
+              kind == ReferenceKind.MANY_TO_MANY),
         )
-        .map(({ name }) => name as NonFunctionPropertyNames<Entity>);
+        .map(({ name }) => name  as unknown as AutoPath<Entity, string>) as unknown as Populate<Entity>;
     }
 
     return Service;

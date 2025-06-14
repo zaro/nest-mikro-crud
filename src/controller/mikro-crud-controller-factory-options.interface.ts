@@ -1,19 +1,24 @@
-import { AnyEntity, EntityData } from "@mikro-orm/core";
-import { Type, ValidationPipeOptions } from "@nestjs/common";
-import { QueryParams } from "../dto";
-import { MikroCrudService } from "../service";
-import { ActionName, LookupableField, PkType } from "../types";
+import {
+  AnyEntity,
+  EntityData,
+  EntityKey,
+  RequiredEntityData,
+} from '@mikro-orm/core';
+import { Type, ValidationPipeOptions } from '@nestjs/common';
+import { QueryParams } from '../dto';
+import { MikroCrudService } from '../service';
+import { ActionName, LookupableField, PkType } from '../types';
 
 export interface MikroCrudControllerFactoryOptions<
   Entity extends AnyEntity<Entity> = any,
-  CreateDto extends EntityData<Entity> = EntityData<Entity>,
+  CreateDto extends RequiredEntityData<Entity> = RequiredEntityData<Entity>,
   UpdateDto extends EntityData<Entity> = EntityData<Entity>,
-  LookupField extends LookupableField<Entity> = LookupableField<Entity>,
+  LookupField extends EntityKey<Entity> = EntityKey<Entity>,
   Service extends MikroCrudService<
     Entity,
     CreateDto,
     UpdateDto
-  > = MikroCrudService<Entity, CreateDto, UpdateDto>
+  > = MikroCrudService<Entity, CreateDto, UpdateDto>,
 > {
   /**
    * The service will be auto-injected for db CRUD actions.

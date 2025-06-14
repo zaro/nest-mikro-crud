@@ -13,17 +13,19 @@ import { MikroCrudModule } from "src/mikro-crud.module";
 import supertest, { Response } from "supertest";
 import { prepareE2E } from "tests/utils";
 import { CreateBookDto, UpdateBookDto } from "./dtos";
+import { EntityManager } from "@mikro-orm/sqlite";
+import TestAgent from "supertest/lib/agent";
 
 @Filter({ name: "crud", cond: { id: 1 } })
 @Entity()
-export class Filtered extends BaseEntity<Filtered, "id"> {
+export class Filtered extends BaseEntity {
   @PrimaryKey()
   id!: number;
 }
 
 describe("Entity Filter", () => {
   let module: TestingModule;
-  let requester: supertest.SuperTest<supertest.Test>;
+  let requester: TestAgent<supertest.Test>;
   let response: Response;
 
   @Injectable()
@@ -31,7 +33,7 @@ describe("Entity Filter", () => {
     entity: Filtered,
     dto: {
       create: CreateBookDto,
-      update: UpdateBookDto,
+      update: Object,
     },
   }).product {}
 
@@ -52,13 +54,16 @@ describe("Entity Filter", () => {
       [Filtered]
     ));
 
-    const repo: EntityRepository<Filtered> = module.get(
-      getRepositoryToken(Filtered)
-    );
+    const em: EntityManager =  module.get<EntityManager>(EntityManager).fork();
+    
     for (let i = 1; i <= 2; i++) {
       const entity = new Filtered().assign({ id: i });
-      await repo.persistAndFlush(entity);
+      await em.persist(entity);
     }
+    em.flush();
+  });
+  afterEach(async () => {   
+      await module.close();
   });
 
   describe("/ (GET)", () => {

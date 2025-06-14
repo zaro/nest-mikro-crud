@@ -1,4 +1,5 @@
 import {
+  Cascade,
   Collection,
   Entity,
   OneToMany,
@@ -30,6 +31,7 @@ export class Book {
   @OneToMany({
     entity: () => Page,
     mappedBy: (page) => page.book,
+    cascade: [Cascade.REMOVE],
   })
   pages = new Collection<Page>(this);
 

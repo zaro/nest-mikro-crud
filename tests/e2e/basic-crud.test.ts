@@ -8,10 +8,12 @@ import supertest, { Response } from "supertest";
 import { prepareE2E } from "../utils";
 import { CreateBookDto, UpdateBookDto } from "./dtos";
 import { Book, Page, Summary } from "./entities";
+import { EntityManager } from "@mikro-orm/sqlite";
+import TestAgent from "supertest/lib/agent";
 
 describe("Basic CRUD", () => {
   let module: TestingModule;
-  let requester: supertest.SuperTest<supertest.Test>;
+  let requester: TestAgent<supertest.Test>;
   let response: Response;
   let createBookDto: CreateBookDto;
   let updateBookDto: UpdateBookDto;
@@ -52,37 +54,41 @@ describe("Basic CRUD", () => {
       providers: [TestService],
     }));
 
-    const [bookRepo, pageRepo, summaryRepo] = [
-      module.get<EntityRepository<Book>>(getRepositoryToken(Book)),
-      module.get<EntityRepository<Page>>(getRepositoryToken(Page)),
-      module.get<EntityRepository<Summary>>(getRepositoryToken(Summary)),
-    ];
+    const em: EntityManager =  module.get<EntityManager>(EntityManager).fork();
+
     for (let i = 1; i <= 5; i++) {
-      const book = bookRepo.create({
+      const book = em.create(Book, {
         name: "parent" + i,
         price: i,
+      }, {
+        partial: true,
       });
-      const page = pageRepo.create({
+      const page = em.create(Page, {
         book,
         number: i,
       });
-      const summary = summaryRepo.create({
+      const summary = em.create(Summary, {
         book,
         text: "summary" + i,
       });
-      bookRepo.persist(book);
-      pageRepo.persist(page);
-      summaryRepo.persist(summary);
+      em.persist(book);
+      em.persist(page);
+      em.persist(summary);
     }
-    summaryRepo.persist(
-      summaryRepo.create({
+    em.persist(
+      em.create(Summary, {
         id: 6,
         text: "new",
+      }, {
+        partial: true,
       })
     );
-    await bookRepo.flush();
-    await pageRepo.flush();
-    await summaryRepo.flush();
+
+    em.flush();
+  });
+
+  afterEach(async () => {
+    await module.close();
   });
 
   describe("/ (GET)", () => {

@@ -1,12 +1,12 @@
-import { FilterQuery, FindOptions, QueryOrderMap } from "@mikro-orm/core";
-import { NonFunctionPropertyNames, OperatorMap } from "@mikro-orm/core/typings";
+import { FilterQuery, FindOptions, QueryOrderMap } from '@mikro-orm/core';
+import { EntityKey, EntityProps, OperatorMap } from '@mikro-orm/core/typings';
 import {
   FilterOperator,
   FilterQueryParam,
   OrderQueryParam,
   ScalarPath,
   walkPath,
-} from "..";
+} from '..';
 
 export class QueryParser<Entity> {
   /**
@@ -17,17 +17,17 @@ export class QueryParser<Entity> {
     order,
   }: {
     order: OrderQueryParam<Entity>[];
-  }): Promise<FindOptions<Entity>["orderBy"]> {
-    const orderOptions: FindOptions<Entity>["orderBy"] = {};
+  }): Promise<FindOptions<Entity>['orderBy']> {
+    const orderOptions: FindOptions<Entity>['orderBy'] = {};
     order.forEach((raw) => {
-      const [path, order] = raw.split(":") as [
+      const [path, order] = raw.split(':') as [
         ScalarPath<Entity>,
-        "asc" | "desc"
+        'asc' | 'desc',
       ];
       walkPath(
         orderOptions,
         path,
-        (obj: QueryOrderMap, key: string) => (obj[key] = order)
+        (obj, key: string) => (obj[key] = order),
       );
     });
     return orderOptions;
@@ -42,32 +42,30 @@ export class QueryParser<Entity> {
   }: {
     filter: FilterQueryParam<Entity>[];
   }): Promise<FilterQuery<Entity>> {
-    const conditions: Partial<
-      Record<NonFunctionPropertyNames<Entity>, OperatorMap<unknown>>
-    > = {};
+    const conditions: FilterQuery<Entity> = {};
 
     rawFilters.forEach(async (raw) => {
       const [, path, rawOp, value] = /^(.*)\|(.+):(.*)$/.exec(raw)! as [
         string,
         ScalarPath<Entity>,
         FilterOperator,
-        string
+        string,
       ] &
         RegExpExecArray;
 
       const parseMultiValues = () =>
-        value.split(/(?<!\\),/).map((v) => v.replace("\\,", ","));
+        value.split(/(?<!\\),/).map((v) => v.replace('\\,', ','));
 
       const fieldConditions = walkPath(
         conditions,
         path,
-        (obj, key) => (obj[key] = obj[key] ?? {})
+        (obj, key) => (obj[key] = obj[key] ?? {}),
       ) as OperatorMap<unknown>;
 
-      if (rawOp == "isnull") fieldConditions.$eq = null;
-      else if (rawOp == "notnull") fieldConditions.$ne = null;
+      if (rawOp == 'isnull') fieldConditions.$eq = null;
+      else if (rawOp == 'notnull') fieldConditions.$ne = null;
       else {
-        if (rawOp == "in" || rawOp == "nin")
+        if (rawOp == 'in' || rawOp == 'nin')
           fieldConditions[`$${rawOp}` as const] = parseMultiValues();
         else fieldConditions[`$${rawOp}` as const] = value;
       }

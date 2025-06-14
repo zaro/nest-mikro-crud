@@ -3,31 +3,53 @@ import {
   Collection,
   EntityRepository,
   FilterQuery,
-  IdentifiedReference,
+  Ref,
   NotFoundError,
   Reference,
   wrap,
-} from "@mikro-orm/core";
-import { EntityData, NonFunctionPropertyNames } from "@mikro-orm/core/typings";
-import { Inject } from "@nestjs/common";
-import { FilterQueryParam, OrderQueryParam, RelationPath } from "..";
-import { EntityFilters } from "../providers/entity-filters.interface";
-import { ENTITY_FILTERS } from "../providers/entity-filters.token";
-import { QueryParser } from "../providers/query-parser.service";
+} from '@mikro-orm/core';
+import {
+  EntityData,
+  Populate,
+  RequiredEntityData,
+} from '@mikro-orm/core/typings';
+import { Inject } from '@nestjs/common';
+import { FilterQueryParam, OrderQueryParam, PopulateParameters, RelationPath } from '..';
+import { EntityFilters } from '../providers/entity-filters.interface';
+import { ENTITY_FILTERS } from '../providers/entity-filters.token';
+import { QueryParser } from '../providers/query-parser.service';
 
 export abstract class MikroCrudService<
   Entity extends AnyEntity = AnyEntity,
-  CreateDto extends EntityData<Entity> = EntityData<Entity>,
-  UpdateDto extends EntityData<Entity> = EntityData<Entity>
+  CreateDto extends RequiredEntityData<Entity> = RequiredEntityData<Entity>,
+  UpdateDto extends EntityData<Entity> = EntityData<Entity>,
 > {
-  readonly repository!: EntityRepository<Entity>;
-  readonly collectionFields!: NonFunctionPropertyNames<Entity>[];
+  declare readonly repository: EntityRepository<Entity>;
+  readonly collectionFields!: PopulateParameters<Entity>;
 
   @Inject()
   protected readonly parser!: QueryParser<Entity>;
 
   @Inject(ENTITY_FILTERS)
   protected readonly filters!: EntityFilters;
+
+  protected expandedPopulate(expand: PopulateParameters<Entity>): PopulateParameters<Entity> {
+    if (!expand || expand.length === 0) {
+      return this.collectionFields;
+    }
+    const result: Populate<Entity> = [];
+    if (Array.isArray(this.collectionFields)) {
+      (result as any).push(...this.collectionFields);
+    } else {
+      (result as any).push(this.collectionFields);
+    }
+    if (Array.isArray(expand)) {
+      (result as any).push(...expand);
+    } else {
+      (result as any).push(expand);
+    }
+    return result;
+  }
 
   async list({
     conditions = {},
@@ -44,7 +66,7 @@ export abstract class MikroCrudService<
     offset?: number;
     order?: OrderQueryParam<Entity>[];
     filter?: FilterQueryParam<Entity>[];
-    expand?: RelationPath<Entity>[];
+    expand?: PopulateParameters<Entity>;
     refresh?: boolean;
     user?: any;
   }) {
@@ -56,16 +78,16 @@ export abstract class MikroCrudService<
         offset,
         orderBy: await this.parser.parseOrder({ order }),
         filters: this.filters(user),
-        populate: [...this.collectionFields, ...expand] as string[],
+        populate: this.expandedPopulate(expand),
         refresh,
-      }
+      },
     );
     return { total, results };
   }
 
   async create({ data }: { data: CreateDto; user?: any }): Promise<Entity> {
     const entity = this.repository.create(data);
-    this.repository.persist(entity);
+    this.repository.getEntityManager().persist(entity);
     return entity;
   }
 
@@ -76,13 +98,13 @@ export abstract class MikroCrudService<
     user,
   }: {
     conditions: FilterQuery<Entity>;
-    expand?: RelationPath<Entity>[];
+    expand?: PopulateParameters<Entity>;
     refresh?: boolean;
     user?: any;
   }): Promise<Entity> {
     return await this.repository.findOneOrFail(conditions, {
       filters: this.filters(user),
-      populate: [...this.collectionFields, ...expand] as string[],
+      populate: this.expandedPopulate(expand),
       refresh,
     });
   }
@@ -94,8 +116,8 @@ export abstract class MikroCrudService<
     entity: Entity;
     data: CreateDto;
     user?: any;
-  }): Promise<Entity> {
-    return wrap(entity).assign(data, { merge: true });
+  }): Promise<Partial<Entity>> {
+    return wrap(entity).assign(data as any, { merge: true });
   }
 
   async update({
@@ -105,12 +127,12 @@ export abstract class MikroCrudService<
     entity: Entity;
     data: UpdateDto;
     user?: any;
-  }): Promise<Entity> {
-    return wrap(entity).assign(data, { merge: true });
+  }): Promise<Partial<Entity>> {
+    return wrap(entity).assign(data as any, { merge: true });
   }
 
   async destroy({ entity }: { entity: Entity; user?: any }): Promise<Entity> {
-    this.repository.remove(entity);
+    this.repository.getEntityManager().remove(entity);
     return entity;
   }
 
@@ -131,7 +153,7 @@ export abstract class MikroCrudService<
   }
 
   async save(): Promise<void> {
-    await this.repository.flush();
+    await this.repository.getEntityManager().flush();
   }
 
   /**
@@ -143,17 +165,17 @@ export abstract class MikroCrudService<
     expand = [],
   }: {
     entity: Entity;
-    expand?: RelationPath<Entity>[];
+    expand?: PopulateParameters<Entity>;
   }): Promise<Entity> {
     function digIn(entity: AnyEntity, relationNode?: RelationPath<Entity>) {
-      const entityMeta = entity.__helper!.__meta;
+      const entityMeta = wrap(entity, true).__meta;
       entityMeta.relations.forEach(({ name }) => {
         const value = entity[name];
         const relationPath = (
           relationNode ? `${relationNode}.${name}` : name
         ) as RelationPath<Entity>;
-        const shouldPopulate = expand.some((path) =>
-          path.startsWith(relationPath)
+        const shouldPopulate = (Array.isArray(expand) ? expand : [expand]).some(
+          (path) => path.startsWith(relationPath),
         );
 
         // It is possible for a collection/reference/entity which need to be marked as populated to appear
@@ -169,7 +191,7 @@ export abstract class MikroCrudService<
             collection.populated(true);
           }
         } else if (value instanceof Reference) {
-          const reference: IdentifiedReference<AnyEntity> = value;
+          const reference: Ref<AnyEntity> = value;
           if (!shouldPopulate) {
             reference.populated(false);
           } else {

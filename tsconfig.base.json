@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "composite": true,
-    "target": "ES2019",
-    "module": "CommonJS",
+    "target": "ES2024",
+    "module": "es2022",
     "lib": ["ESNext", "DOM", "DOM.Iterable", "ScriptHost"],
     "strict": true,
     "declaration": true,

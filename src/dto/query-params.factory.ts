@@ -1,3 +1,4 @@
+import { Type as NestType } from "@nestjs/common";
 import { AnyEntity } from "@mikro-orm/core";
 import { Exclude, Type } from "class-transformer";
 import {
@@ -19,10 +20,10 @@ import { QueryParams } from "./query-params.interface";
 const deduplicate = (arr: unknown[]) => [...new Set(arr)];
 
 export class QueryParamsFactory<
-  Entity extends AnyEntity<Entity> = any
+  Entity = any,
 > extends AbstractFactory<QueryParams<Entity>> {
   readonly options;
-  readonly product;
+  readonly product:  NestType<QueryParams<Entity>>;
 
   constructor(options: QueryParamsFactoryOptions<Entity>) {
     super();
@@ -55,7 +56,7 @@ export class QueryParamsFactory<
     const { limit, offset, order, filter, expand } = this.options;
 
     type Interface = QueryParams<Entity>;
-    return class QueryParams implements Interface {
+    return class QueryParamsImpl implements QueryParams<Entity> {
       limit? = limit?.default;
       offset? = offset?.default;
       order? = order?.default;
@@ -115,7 +116,7 @@ export class QueryParamsFactory<
         Type(() => String),
         IsOptional(),
         IsArray(),
-        IsIn(expand.in, { each: true })
+        IsIn(Array.isArray(expand.in) ? expand.in : [expand.in], { each: true })
       );
   }
 

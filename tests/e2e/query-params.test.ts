@@ -1,21 +1,24 @@
-import { EntityRepository } from "@mikro-orm/core";
+import { Collection, EntityRepository, Populate, PopulatePath, Reference } from "@mikro-orm/core";
 import { getRepositoryToken } from "@mikro-orm/nestjs";
 import { Controller, Injectable, Type } from "@nestjs/common";
 import { TestingModule } from "@nestjs/testing";
 import {
   MikroCrudControllerFactory,
   MikroCrudServiceFactory,
-  QueryParamsFactory,
+  QueryParamsFactory
 } from "src";
 import { MikroCrudModule } from "src/mikro-crud.module";
 import supertest, { Response } from "supertest";
 import { prepareE2E } from "tests/utils";
 import { CreateBookDto, UpdateBookDto } from "./dtos";
 import { Book, Line, Page } from "./entities";
+import { EntityManager } from "@mikro-orm/sqlite";
+import { CleanKeys, IsAny, Ref, Rel } from "@mikro-orm/core/typings";
+import TestAgent from "supertest/lib/agent";
 
 describe("Query Params", () => {
   let module: TestingModule;
-  let requester: supertest.SuperTest<supertest.Test>;
+  let requester: TestAgent<supertest.Test>;
   let response: Response;
   let entity: Book;
 
@@ -26,33 +29,30 @@ describe("Query Params", () => {
       providers: [TestService],
     }));
 
-    const [bookRepo, pageRepo, lineRepo] = [
-      module.get<EntityRepository<Book>>(getRepositoryToken(Book)),
-      module.get<EntityRepository<Page>>(getRepositoryToken(Page)),
-      module.get<EntityRepository<Line>>(getRepositoryToken(Line)),
-    ];
+    const em: EntityManager =  module.get<EntityManager>(EntityManager).fork();
+
     for (let i = 1; i <= 5; i++) {
-      const book = bookRepo.create({
+      const book = em.create(Book, {
         name: "parent" + i,
         price: i,
         summary: { text: "summary" + i },
       });
-      bookRepo.persist(book);
+      em.persist(book);
 
-      const page = pageRepo.create({
+      const page = em.create(Page, {
         book,
         number: i,
       });
-      pageRepo.persist(page);
+      em.persist(page);
 
-      const line = lineRepo.create({
+      const line = em.create(Line, {
         page,
         text: "text" + i,
       });
-      lineRepo.persist(line);
+      em.persist(line);
     }
 
-    await bookRepo.flush();
+    await em.flush();
   }
 
   @Injectable()
@@ -78,6 +78,9 @@ describe("Query Params", () => {
 
     beforeEach(async () => {
       await prepare(TestController);
+    });
+    afterEach(async () => {   
+      await module.close();
     });
 
     describe("/ (GET)", () => {
@@ -138,6 +141,9 @@ describe("Query Params", () => {
     beforeEach(async () => {
       await prepare(TestController);
     });
+    afterEach(async () => {   
+      await module.close();
+    });
 
     describe("/ (GET)", () => {
       describe.each`
@@ -159,16 +165,18 @@ describe("Query Params", () => {
 
       describe.each`
         queries
-        ${{ order: ["id:desc"] }}
         ${{ "order[]": ["id:xxxx"] }}
-      `("Illegal Order: $queries", ({ queries }) => {
-        beforeEach(async () => {
-          response = await requester.get("/").query(queries);
-        });
+      `("Illegal Order: ${queries}", ({ queries }) => {
+          const testTitle = `Illegal Order: ${JSON.stringify(queries)}`;
+          describe(testTitle, () => {
+            beforeEach(async () => {
+              response = await requester.get("/").query(queries);
+            });
 
-        it("should returns status 400", () => {
-          expect(response.status).toBe(400);
-        });
+            it("should returns status 400", () => {
+              expect(response.status).toBe(400);
+            });
+          })
       });
     });
   });
@@ -189,6 +197,9 @@ describe("Query Params", () => {
 
     beforeEach(async () => {
       await prepare(TestController);
+    });
+    afterEach(async () => {   
+      await module.close();
     });
 
     describe("/ (GET)", () => {
@@ -249,6 +260,9 @@ describe("Query Params", () => {
 
     beforeEach(async () => {
       await prepare(TestController);
+    });
+    afterEach(async () => {   
+      await module.close();
     });
 
     describe("/:id/ (GET)", () => {

@@ -1,4 +1,9 @@
-import { AnyEntity, EntityData } from "@mikro-orm/core";
+import {
+  AnyEntity,
+  EntityData,
+  EntityKey,
+  RequiredEntityData,
+} from '@mikro-orm/core';
 import {
   Body,
   Delete,
@@ -15,27 +20,28 @@ import {
   Type,
   UsePipes,
   ValidationPipe,
-} from "@nestjs/common";
-import { AbstractFactory } from "../abstract.factory";
-import { ReqUser } from "../decorators";
-import { QueryParamsFactory } from "../dto";
-import { MikroCrudService, MikroCrudServiceFactory } from "../service";
-import { FACTORY, TS_TYPE } from "../symbols";
-import { ActionName, LookupableField, PkType } from "../types";
-import { MikroCrudControllerFactoryOptions } from "./mikro-crud-controller-factory-options.interface";
-import { MikroCrudController } from "./mikro-crud-controller.class";
+} from '@nestjs/common';
+import { AbstractFactory } from '../abstract.factory';
+import { ReqUser } from '../decorators';
+import { QueryParamsFactory } from '../dto';
+import { MikroCrudService, MikroCrudServiceFactory } from '../service';
+import { FACTORY, TS_TYPE } from '../symbols';
+import { ActionName, LookupableField, PkType } from '../types';
+import { MikroCrudControllerFactoryOptions } from './mikro-crud-controller-factory-options.interface';
+import { MikroCrudController } from './mikro-crud-controller.class';
 
-type ServiceGenerics<Service> = Service extends MikroCrudService<
-  infer Entity,
-  infer CreateDto,
-  infer UpdateDto
->
-  ? {
-      Entity: Entity;
-      CreateDto: CreateDto;
-      UpdateDto: UpdateDto;
-    }
-  : never;
+type ServiceGenerics<Service> =
+  Service extends MikroCrudService<
+    infer Entity,
+    infer CreateDto,
+    infer UpdateDto
+  >
+    ? {
+        Entity: Entity;
+        CreateDto: CreateDto;
+        UpdateDto: UpdateDto;
+      }
+    : never;
 
 export class MikroCrudControllerFactory<
   Service extends MikroCrudService<
@@ -43,10 +49,11 @@ export class MikroCrudControllerFactory<
     CreateDto,
     UpdateDto
   > = MikroCrudService<any, any, any>,
-  Entity extends AnyEntity<Entity> = ServiceGenerics<Service>["Entity"],
-  CreateDto extends EntityData<Entity> = ServiceGenerics<Service>["CreateDto"],
-  UpdateDto extends EntityData<Entity> = ServiceGenerics<Service>["UpdateDto"],
-  LookupField extends LookupableField<Entity> = LookupableField<Entity>
+  Entity extends AnyEntity<Entity> = ServiceGenerics<Service>['Entity'],
+  CreateDto extends
+    RequiredEntityData<Entity> = ServiceGenerics<Service>['CreateDto'],
+  UpdateDto extends EntityData<Entity> = ServiceGenerics<Service>['UpdateDto'],
+  LookupField extends EntityKey<Entity> = EntityKey<Entity>,
 > extends AbstractFactory<
   MikroCrudController<Entity, CreateDto, UpdateDto, LookupField, Service>
 > {
@@ -61,13 +68,13 @@ export class MikroCrudControllerFactory<
       UpdateDto,
       LookupField,
       Service
-    >
+    >,
   ) {
     super();
 
     this.serviceFactory = Reflect.getMetadata(
       FACTORY,
-      options.service
+      options.service,
     ) as MikroCrudServiceFactory<Entity, CreateDto, UpdateDto>;
 
     this.options = this.standardizeOptions(options);
@@ -84,7 +91,7 @@ export class MikroCrudControllerFactory<
       UpdateDto,
       LookupField,
       Service
-    >
+    >,
   ) {
     const {
       params = new QueryParamsFactory({}).product,
@@ -103,11 +110,11 @@ export class MikroCrudControllerFactory<
           ((Reflect.getMetadata(
             TS_TYPE,
             this.serviceFactory.options.entity.prototype,
-            lookup.field
+            lookup.field,
           ) == Number
-            ? "number"
-            : "uuid") as PkType),
-        name: lookup.name ?? "lookup",
+            ? 'number'
+            : 'uuid') as PkType),
+        name: lookup.name ?? 'lookup',
       },
       requestUser: {
         ...requestUser,
@@ -141,7 +148,7 @@ export class MikroCrudControllerFactory<
       Service
     > {
       @Inject(service)
-      readonly service!: Service;
+      declare readonly service: Service;
 
       readonly lookupField = lookupField;
     }
@@ -153,7 +160,7 @@ export class MikroCrudControllerFactory<
     const {
       lookup: { type: lookupType, name: lookupParamName },
     } = this.options;
-    const lookupInternalType = lookupType == "number" ? Number : String;
+    const lookupInternalType = lookupType == 'number' ? Number : String;
 
     const { dto } = this.serviceFactory.options;
     const {
@@ -165,11 +172,11 @@ export class MikroCrudControllerFactory<
 
     const Lookup = Param(
       lookupParamName,
-      ...(lookupType == "number"
+      ...(lookupType == 'number'
         ? [ParseIntPipe]
-        : lookupType == "uuid"
-        ? [ParseUUIDPipe]
-        : [])
+        : lookupType == 'uuid'
+          ? [ParseUUIDPipe]
+          : []),
     );
     const Queries = Query();
     const Data = Body();
@@ -212,7 +219,7 @@ export class MikroCrudControllerFactory<
       this.defineParamTypes(
         name,
         ...paramTypes,
-        reqUserType
+        reqUserType,
       ).applyParamDecoratorSets(name, ...paramDecoratorSets, reqUserDecorators);
     }
   }

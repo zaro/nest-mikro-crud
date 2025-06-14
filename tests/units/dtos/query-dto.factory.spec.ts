@@ -6,7 +6,7 @@ import { buildKeyChecker } from "tests/utils";
 
 const d = buildKeyChecker<typeof factory>();
 
-interface Entity extends BaseEntity<Entity, "id"> {
+interface Entity extends BaseEntity {
   id: number;
 }
 

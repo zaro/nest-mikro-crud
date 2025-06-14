@@ -5,9 +5,12 @@ import supertest, { Response } from "supertest";
 import { prepareE2E } from "../utils";
 import { CreateBookDto, UpdateBookDto } from "./dtos";
 import { Book } from "./entities";
+import { TestingModule } from "@nestjs/testing";
+import TestAgent from "supertest/lib/agent";
 
 describe("Disabled Actions", () => {
-  let requester: supertest.SuperTest<supertest.Test>;
+  let module: TestingModule;
+  let requester: TestAgent<supertest.Test>;
   let response: Response;
 
   @Injectable()
@@ -27,11 +30,14 @@ describe("Disabled Actions", () => {
   }).product {}
 
   beforeEach(async () => {
-    ({ requester } = await prepareE2E({
+    ({ module, requester } = await prepareE2E({
       imports: [MikroCrudModule],
       controllers: [TestController],
       providers: [TestService],
     }));
+  });
+  afterEach(async () => {   
+      await module.close();
   });
 
   describe("/ (GET)", () => {

@@ -1,26 +1,38 @@
-import { AnyEntity, EntityData } from "@mikro-orm/core";
-import { NotFoundException } from "@nestjs/common";
-import { QueryParams } from "../dto";
-import { MikroCrudService } from "../service";
-import { LookupableField } from "../types";
+import {
+  AnyEntity,
+  EntityData,
+  RequiredEntityData,
+  PrimaryKey,
+  FilterQuery,
+  wrap,
+  EntityKey,
+  FilterObject,
+  FilterValue,
+  ObjectQuery,
+  ExpandProperty,
+} from '@mikro-orm/core';
+import { NotFoundException } from '@nestjs/common';
+import { QueryParams } from '../dto';
+import { MikroCrudService } from '../service';
+import { LookupableField } from '../types';
 
 export abstract class MikroCrudController<
   Entity extends AnyEntity<Entity> = any,
-  CreateDto extends EntityData<Entity> = EntityData<Entity>,
+  CreateDto extends RequiredEntityData<Entity> = RequiredEntityData<Entity>,
   UpdateDto extends EntityData<Entity> = EntityData<Entity>,
-  LookupField extends LookupableField<Entity> = LookupableField<Entity>,
+  LookupField extends EntityKey<Entity> = EntityKey<Entity>,
   Service extends MikroCrudService<
     Entity,
     CreateDto,
     UpdateDto
-  > = MikroCrudService<Entity, CreateDto, UpdateDto>
+  > = MikroCrudService<Entity, CreateDto, UpdateDto>,
 > {
   readonly service!: Service;
   readonly lookupField!: LookupField;
 
   async list(
     { limit, offset, order, filter, expand }: QueryParams<Entity>,
-    user: any
+    user: any,
   ): Promise<unknown> {
     const { total, results } = await this.service.list({
       limit,
@@ -33,8 +45,8 @@ export abstract class MikroCrudController<
     await Promise.all(
       results.map(
         async (entity) =>
-          await this.service.adjustPopulationStatus({ entity, expand })
-      )
+          await this.service.adjustPopulationStatus({ entity, expand }),
+      ),
     );
     await this.service.save();
     return { total, results };
@@ -43,7 +55,7 @@ export abstract class MikroCrudController<
   async create(
     { expand }: QueryParams<Entity>,
     data: CreateDto,
-    user: any
+    user: any,
   ): Promise<unknown> {
     let entity = await this.service.create({ data, user });
     await this.service.save();
@@ -59,11 +71,11 @@ export abstract class MikroCrudController<
   }
 
   async retrieve(
-    lookup: Entity[LookupField],
+    lookup: FilterValue<ExpandProperty<Entity[LookupField]>>,
     { expand }: QueryParams<Entity>,
-    user: any
+    user: any,
   ): Promise<unknown> {
-    const conditions = { [this.lookupField]: lookup };
+    const conditions: any = { [this.lookupField]: lookup };
     const entity = await this.service
       .retrieve({
         conditions,
@@ -82,9 +94,9 @@ export abstract class MikroCrudController<
     lookup: Entity[LookupField],
     { expand }: QueryParams<Entity>,
     data: CreateDto,
-    user: any
+    user: any,
   ): Promise<unknown> {
-    const conditions = { [this.lookupField]: lookup };
+    const conditions: any = { [this.lookupField]: lookup };
     let entity = await this.service
       .retrieve({
         conditions,
@@ -111,9 +123,9 @@ export abstract class MikroCrudController<
     lookup: Entity[LookupField],
     { expand }: QueryParams<Entity>,
     data: UpdateDto,
-    user: any
+    user: any,
   ): Promise<unknown> {
-    const conditions = { [this.lookupField]: lookup };
+    const conditions: any = { [this.lookupField]: lookup };
     let entity = await this.service
       .retrieve({
         conditions,
@@ -137,7 +149,7 @@ export abstract class MikroCrudController<
   }
 
   async destroy(lookup: Entity[LookupField], user: any): Promise<unknown> {
-    const conditions = { [this.lookupField]: lookup };
+    const conditions: any = { [this.lookupField]: lookup };
     const entity = await this.service
       .retrieve({ conditions, user })
       .catch(() => {
@@ -148,8 +160,13 @@ export abstract class MikroCrudController<
     return;
   }
 
-  private getPrimaryKey(entity: AnyEntity) {
-    const pkField = entity.__helper!.__meta.primaryKeys[0];
-    return { [pkField]: entity[pkField] };
+  private getPrimaryKey(entity: Entity): FilterQuery<Entity> {
+    const primaryKeys = wrap(entity, true).__meta.primaryKeys;
+    const pk: FilterQuery<Entity> = {};
+    for (const key of primaryKeys) {
+      const value = (entity as any)[key];
+      pk[key] = value;
+    }
+    return pk;
   }
 }
