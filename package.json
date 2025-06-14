@@ -1,5 +1,5 @@
 {
-  "name": "nest-mikro-crud",
+  "name": "@zaro/nest-mikro-crud",
   "version": "3.0.0",
   "description": "Easily build RESTful CRUD APIs for production.",
   "main": "lib/index.js",
