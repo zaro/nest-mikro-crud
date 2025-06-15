@@ -12,7 +12,7 @@ import {
   EntityData,
   Populate,
   RequiredEntityData,
-} from '@mikro-orm/core/typings';
+} from '@mikro-orm/core';
 import { Inject } from '@nestjs/common';
 import { FilterQueryParam, OrderQueryParam, PopulateParameters, RelationPath } from '..';
 import { EntityFilters } from '../providers/entity-filters.interface';

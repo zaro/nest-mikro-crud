@@ -6,7 +6,7 @@ import {
   EntityKey,
   Populate,
   RequiredEntityData,
-} from '@mikro-orm/core/typings';
+} from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { Type } from '@nestjs/common';
 import { AbstractFactory } from '../abstract.factory';

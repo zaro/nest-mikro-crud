@@ -1,4 +1,4 @@
-import { Scalar } from "@mikro-orm/core/typings";
+import { Scalar } from "@mikro-orm/core";
 import { ExtractPath } from "../utils";
 
 /**

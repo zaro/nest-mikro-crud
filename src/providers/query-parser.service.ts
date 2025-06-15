@@ -1,5 +1,4 @@
-import { FilterQuery, FindOptions, QueryOrderMap } from '@mikro-orm/core';
-import { EntityKey, EntityProps, OperatorMap } from '@mikro-orm/core/typings';
+import { FilterQuery, FindOptions, ObjectQuery } from '@mikro-orm/core';
 import {
   FilterOperator,
   FilterQueryParam,
@@ -60,7 +59,7 @@ export class QueryParser<Entity> {
         conditions,
         path,
         (obj, key) => (obj[key] = obj[key] ?? {}),
-      ) as OperatorMap<unknown>;
+      ) as ObjectQuery<unknown>;
 
       if (rawOp == 'isnull') fieldConditions.$eq = null;
       else if (rawOp == 'notnull') fieldConditions.$ne = null;
