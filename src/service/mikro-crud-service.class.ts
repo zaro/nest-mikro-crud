@@ -15,7 +15,7 @@ import {
 } from '@mikro-orm/core';
 import { Inject } from '@nestjs/common';
 import { FilterQueryParam, OrderQueryParam, PopulateParameters, RelationPath } from '..';
-import { EntityFilters } from '../providers/entity-filters.interface';
+import type { EntityFilters } from '../providers/entity-filters.interface';
 import { ENTITY_FILTERS } from '../providers/entity-filters.token';
 import { QueryParser } from '../providers/query-parser.service';
 
