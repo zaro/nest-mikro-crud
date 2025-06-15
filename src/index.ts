@@ -8,3 +8,5 @@ export * from "./providers";
 export * from "./service";
 export * from "./types";
 export * from "./utils";
+export * from "./mikro-crud.module";
+export * from "./mikro-crud-module-options.interface";
