@@ -8,6 +8,7 @@ import { Type, ValidationPipeOptions } from '@nestjs/common';
 import { QueryParams } from '../dto';
 import { MikroCrudService } from '../service';
 import { ActionName, LookupableField, PkType } from '../types';
+import { ServiceType } from '../types/service.type';
 
 export interface MikroCrudControllerFactoryOptions<
   Entity extends AnyEntity<Entity> = any,
@@ -23,7 +24,7 @@ export interface MikroCrudControllerFactoryOptions<
   /**
    * The service will be auto-injected for db CRUD actions.
    */
-  service: Type<Service>;
+  service: ServiceType<Service>;
   /**
    * Specify which actions should be enabled.
    */

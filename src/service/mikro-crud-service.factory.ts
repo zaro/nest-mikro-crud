@@ -13,6 +13,7 @@ import { AbstractFactory } from '../abstract.factory';
 import { FACTORY } from '../symbols';
 import { MikroCrudServiceFactoryOptions } from './mikro-crud-service-factory-options.interface';
 import { MikroCrudService } from './mikro-crud-service.class';
+import { ServiceType } from '../types/service.type';
 
 export class MikroCrudServiceFactory<
   Entity extends AnyEntity<Entity> = any,
@@ -37,10 +38,12 @@ export class MikroCrudServiceFactory<
     return options;
   }
 
-  protected create(): Type<MikroCrudService<Entity, CreateDto, UpdateDto>> {
+  protected create(): ServiceType<MikroCrudService<Entity, CreateDto, UpdateDto>> {
     const { entity: entityClass } = this.options;
 
     class Service extends MikroCrudService<Entity, CreateDto, UpdateDto> {
+      static readonly entityClass = entityClass;
+
       @InjectRepository(entityClass)
       declare readonly repository: EntityRepository<Entity>;
 

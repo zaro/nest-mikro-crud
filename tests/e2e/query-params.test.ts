@@ -13,7 +13,6 @@ import { prepareE2E } from "tests/utils";
 import { CreateBookDto, UpdateBookDto } from "./dtos";
 import { Book, Line, Page } from "./entities";
 import { EntityManager } from "@mikro-orm/sqlite";
-import { CleanKeys, IsAny, Ref, Rel } from "@mikro-orm/core/typings";
 import TestAgent from "supertest/lib/agent";
 
 describe("Query Params", () => {
