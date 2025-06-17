@@ -16,6 +16,7 @@ import { FACTORY } from "../symbols";
 import { OrderQueryParam } from "../types";
 import { QueryParamsFactoryOptions } from "./query-params-factory-options.interface";
 import { QueryParams } from "./query-params.interface";
+import { SwaggerApiProperty } from "../controller/swagger.helper";
 
 const deduplicate = (arr: unknown[]) => [...new Set(arr)];
 
@@ -55,14 +56,19 @@ export class QueryParamsFactory<
   protected createRawClass() {
     const { limit, offset, order, filter, expand } = this.options;
 
-    type Interface = QueryParams<Entity>;
-    return class QueryParamsImpl implements QueryParams<Entity> {
+    class QueryParamsImpl implements QueryParams<Entity> {
+      @SwaggerApiProperty({type: 'number'})
       limit? = limit?.default;
+      @SwaggerApiProperty({type: 'number'})
       offset? = offset?.default;
+      @SwaggerApiProperty({type: 'string', isArray: true})
       order? = order?.default;
+      @SwaggerApiProperty({type: 'string', isArray: true})
       filter? = filter?.default;
+      @SwaggerApiProperty({type: 'string', isArray: true})
       expand? = expand?.default;
     };
+    return QueryParamsImpl;
   }
 
   protected defineValidations() {

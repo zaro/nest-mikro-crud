@@ -29,7 +29,7 @@ import { FACTORY, TS_TYPE } from "../symbols";
 import { ActionName, LookupableField, PkType } from "../types";
 import { MikroCrudControllerFactoryOptions } from "./mikro-crud-controller-factory-options.interface";
 import { MikroCrudController } from "./mikro-crud-controller.class";
-import { appendApiDecorators, listDto } from "./swgger.helper";
+import { appendApiDecorators, listDto, queryParamsDto, queryParamsDtoList } from "./swagger.helper";
 
 type ServiceGenerics<Service> = Service extends MikroCrudService<
   infer Entity,
@@ -94,6 +94,7 @@ export class MikroCrudControllerFactory<
   ) {
     const {
       params = new QueryParamsFactory({}).product,
+      actions,
       lookup,
       requestUser = { decorators: [ReqUser()] },
       validationPipeOptions = {},
@@ -102,6 +103,7 @@ export class MikroCrudControllerFactory<
     return {
       ...options,
       params,
+      actions: actions ??  ["list" ,"create" ,"retrieve" ,"replace" ,"update" ,"destroy"],
       lookup: {
         ...lookup,
         type:

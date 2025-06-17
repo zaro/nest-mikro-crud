@@ -7,13 +7,13 @@ import { CreateBookDto, UpdateBookDto } from "./dtos";
 import { Book } from "./entities";
 import { TestingModule } from "@nestjs/testing";
 import TestAgent from "supertest/lib/agent";
-import { SwaggerModule, DocumentBuilder, OpenAPIObject } from '@nestjs/swagger';
+import { SwaggerModule, DocumentBuilder, OpenAPIObject } from "@nestjs/swagger";
 
-describe.skip("Swagger", () => {
+describe("Swagger", () => {
   let module: TestingModule;
   let requester: TestAgent<supertest.Test>;
   let response: Response;
-  let openApi : OpenAPIObject;
+  let openApi: OpenAPIObject;
 
   @Injectable()
   class TestService extends new MikroCrudServiceFactory({
@@ -27,7 +27,6 @@ describe.skip("Swagger", () => {
   @Controller()
   class TestController extends new MikroCrudControllerFactory({
     service: TestService,
-    actions: [],
     lookup: { field: "id" },
   }).product {}
 
@@ -39,19 +38,55 @@ describe.skip("Swagger", () => {
       providers: [TestService],
     }));
     const options = new DocumentBuilder()
-      .setTitle('Your API Title')
-      .setDescription('Your API description')
-      .setVersion('1.0')
+      .setTitle("Your API Title")
+      .setDescription("Your API description")
+      .setVersion("1.0")
       .build();
-     openApi = SwaggerModule.createDocument(app, options);
+    openApi = SwaggerModule.createDocument(app, options);
   });
-  afterEach(async () => {   
-      await module.close();
+  afterEach(async () => {
+    await module.close();
   });
 
   describe("Check if OpenAPi is Correct", () => {
-    it("should be de", () => {
-      console.log(openApi);
+    it("response type should be defined", () => {
+      // console.dir(openApi, { depth: null });
+      expect(openApi.paths["/"].get?.responses.default).toHaveProperty(
+        "description",
+        "Returns a list of Book"
+      );
+      expect(openApi.paths["/"].get?.responses.default).toEqual(
+        expect.objectContaining({
+          content: expect.objectContaining({
+            "application/json": expect.objectContaining({
+              schema: expect.objectContaining({
+                $ref: "#/components/schemas/ListResponseDto",
+              }),
+            }),
+          }),
+        })
+      );
+    });
+    it("params types should be defined", () => {
+      expect(openApi.paths["/"].get?.parameters).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "limit",
+          }),
+          expect.objectContaining({
+            name: "offset",
+          }),
+          expect.objectContaining({
+            name: "order",
+          }),
+          expect.objectContaining({
+            name: "filter",
+          }),
+          expect.objectContaining({
+            name: "expand",
+          }),
+        ])
+      );
     });
   });
 });

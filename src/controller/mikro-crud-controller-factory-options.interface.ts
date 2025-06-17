@@ -28,7 +28,7 @@ export interface MikroCrudControllerFactoryOptions<
   /**
    * Specify which actions should be enabled.
    */
-  actions: ActionName[];
+  actions?: ActionName[];
   /**
    * Be used to validate query params.
    */
