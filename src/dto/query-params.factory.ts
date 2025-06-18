@@ -57,15 +57,15 @@ export class QueryParamsFactory<
     const { limit, offset, order, filter, expand } = this.options;
 
     class QueryParamsImpl implements QueryParams<Entity> {
-      @SwaggerApiProperty({type: 'number'})
+      @SwaggerApiProperty({type: 'number', required: false})
       limit? = limit?.default;
-      @SwaggerApiProperty({type: 'number'})
+      @SwaggerApiProperty({type: 'number', required: false})
       offset? = offset?.default;
-      @SwaggerApiProperty({type: 'string', isArray: true})
+      @SwaggerApiProperty({type: 'string', isArray: true, required: false})
       order? = order?.default;
-      @SwaggerApiProperty({type: 'string', isArray: true})
+      @SwaggerApiProperty({type: 'string', isArray: true, required: false})
       filter? = filter?.default;
-      @SwaggerApiProperty({type: 'string', isArray: true})
+      @SwaggerApiProperty({type: 'string', isArray: true, required: false})
       expand? = expand?.default;
     };
     return QueryParamsImpl;

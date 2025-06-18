@@ -72,18 +72,28 @@ describe("Swagger", () => {
         expect.arrayContaining([
           expect.objectContaining({
             name: "limit",
+            required: false,
+            in: 'query',
           }),
           expect.objectContaining({
             name: "offset",
+            required: false,
+            in: 'query'
           }),
           expect.objectContaining({
             name: "order",
+            required: false,
+            in: 'query'
           }),
           expect.objectContaining({
             name: "filter",
+            required: false,
+            in: 'query'
           }),
           expect.objectContaining({
             name: "expand",
+            required: false,
+            in: 'query'
           }),
         ])
       );
