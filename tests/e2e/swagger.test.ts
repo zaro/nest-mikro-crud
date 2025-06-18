@@ -51,11 +51,11 @@ describe("Swagger", () => {
   describe("Check if OpenAPi is Correct", () => {
     it("response type should be defined", () => {
       // console.dir(openApi, { depth: null });
-      expect(openApi.paths["/"].get?.responses.default).toHaveProperty(
+      expect(openApi.paths["/"].get?.responses['2XX']).toHaveProperty(
         "description",
         "Returns a list of Book"
       );
-      expect(openApi.paths["/"].get?.responses.default).toEqual(
+      expect(openApi.paths["/"].get?.responses['2XX']).toEqual(
         expect.objectContaining({
           content: expect.objectContaining({
             "application/json": expect.objectContaining({

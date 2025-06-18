@@ -190,6 +190,7 @@ export class MikroCrudControllerFactory<
       list: [
         appendApiDecorators([Get()], {
           response: {
+            status: '2XX',
             description: `Returns a list of ${service.entityClass.name}`,
             type: listDto(service.entityClass),
           },
@@ -199,6 +200,7 @@ export class MikroCrudControllerFactory<
       ],
       create: [appendApiDecorators([Post()], {
           response: {
+            status: '2XX',
             description: `Create new ${service.entityClass.name}`,
             type: service.entityClass,
           },
@@ -206,6 +208,7 @@ export class MikroCrudControllerFactory<
       retrieve: [
         appendApiDecorators([Get(path)], {
           response: {
+            status: '2XX',
             description: `Retrieve ${service.entityClass.name} by ${lookupField}`,
             type: service.entityClass,
           },
@@ -216,6 +219,7 @@ export class MikroCrudControllerFactory<
       replace: [
          appendApiDecorators([Put(path)], {
           response: {
+            status: '2XX',
             description: `Replace ${service.entityClass.name} by ${lookupField}`,
             type: service.entityClass,
           },
@@ -226,6 +230,7 @@ export class MikroCrudControllerFactory<
       update: [
          appendApiDecorators([Patch(path)], {
           response: {
+            status: '2XX',
             description: `Update/patch ${service.entityClass.name} by ${lookupField}`,
             type: service.entityClass,
           },
