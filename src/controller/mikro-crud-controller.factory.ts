@@ -189,60 +189,61 @@ export class MikroCrudControllerFactory<
     > = {
       list: [
         appendApiDecorators([Get()], {
-          response: {
+          responses: [{
             status: '2XX',
             description: `Returns a list of ${service.entityClass.name}`,
             type: listDto(service.entityClass),
-          },
+          }],
         }),
         [queryParamsClass],
         [[Queries]],
       ],
       create: [appendApiDecorators([Post()], {
-          response: {
+          responses: [{
             status: '2XX',
             description: `Create new ${service.entityClass.name}`,
             type: service.entityClass,
-          },
+          }],
         }), [queryParamsClass, dto.create], [[Queries], [Data]]],
       retrieve: [
         appendApiDecorators([Get(path)], {
-          response: {
+          responses: [{
             status: '2XX',
             description: `Retrieve ${service.entityClass.name} by ${lookupField}`,
             type: service.entityClass,
-          },
+          }],
         }),
         [lookupInternalType, queryParamsClass],
         [[Lookup], [Queries]],
       ],
       replace: [
          appendApiDecorators([Put(path)], {
-          response: {
+          responses: [{
             status: '2XX',
             description: `Replace ${service.entityClass.name} by ${lookupField}`,
             type: service.entityClass,
-          },
+          }],
         }),
         [lookupInternalType, queryParamsClass, dto.create],
         [[Lookup], [Queries], [Data]],
       ],
       update: [
          appendApiDecorators([Patch(path)], {
-          response: {
+          responses: [{
             status: '2XX',
             description: `Update/patch ${service.entityClass.name} by ${lookupField}`,
             type: service.entityClass,
-          },
+          }],
         }),
         [lookupInternalType, queryParamsClass, dto.update],
         [[Lookup], [Queries], [Data]],
       ],
       destroy: [
         appendApiDecorators([Delete(path), HttpCode(204)], {
-          response: {
+          responses: [{
+            status: '2XX',
             description: `Delete ${service.entityClass.name} by ${lookupField}`,
-          },
+          }],
         }),
         [lookupInternalType],
         [[Lookup]],

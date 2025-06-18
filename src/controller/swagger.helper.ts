@@ -5,12 +5,20 @@ import { QueryParams } from "../dto";
 import type { FilterQueryParam, OrderQueryParam, PopulateParameters } from "../types";
 
 
+class ErrorResponse {
+  @ApiProperty({type: 'number'})
+  statusCode!: number;
+  @ApiProperty({type: 'string'})
+  message!:string;
+}
+
 
 interface ApiDecoratorsOptions {
   operation?: ApiOperationOptions | undefined;
   query?: ApiQueryOptions | undefined;
   path?: ApiParamOptions | undefined;
-  response?: ApiResponseOptions | undefined;
+  responses?: ApiResponseOptions[] | undefined;
+  noErrorResponses?: boolean;
 }
 export function appendApiDecorators(
   decorators: MethodDecorator[],
@@ -26,8 +34,18 @@ export function appendApiDecorators(
   if (options.path) {
     decorators.push(ApiParam(options.path));
   }
-  if (options.response) {
-    decorators.push(ApiResponse(options.response));
+  if (options.responses) {
+    decorators.push(...options.responses?.map( r => ApiResponse(r)));
+  }
+  if(!options.noErrorResponses){
+    decorators.push(ApiResponse({
+      status: '4XX',
+      type: ErrorResponse
+    }));
+    decorators.push(ApiResponse({
+      status: '5XX',
+      type: ErrorResponse
+    }));
   }
   return decorators;
 }

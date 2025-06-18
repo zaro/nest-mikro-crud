@@ -66,6 +66,28 @@ describe("Swagger", () => {
           }),
         })
       );
+      expect(openApi.paths["/"].get?.responses['4XX']).toEqual(
+        expect.objectContaining({
+          content: expect.objectContaining({
+            "application/json": expect.objectContaining({
+              schema: expect.objectContaining({
+                $ref: "#/components/schemas/ErrorResponse",
+              }),
+            }),
+          }),
+        })
+      );
+      expect(openApi.paths["/"].get?.responses['5XX']).toEqual(
+        expect.objectContaining({
+          content: expect.objectContaining({
+            "application/json": expect.objectContaining({
+              schema: expect.objectContaining({
+                $ref: "#/components/schemas/ErrorResponse",
+              }),
+            }),
+          }),
+        })
+      );
     });
     it("params types should be defined", () => {
       expect(openApi.paths["/"].get?.parameters).toEqual(
