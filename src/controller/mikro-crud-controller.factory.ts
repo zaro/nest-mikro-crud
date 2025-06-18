@@ -2,6 +2,8 @@ import {
   AnyEntity,
   EntityData,
   EntityKey,
+  ExpandProperty,
+  FilterValue,
   RequiredEntityData,
 } from "@mikro-orm/core";
 import {
@@ -23,13 +25,18 @@ import {
 } from "@nestjs/common";
 import { AbstractFactory } from "../abstract.factory";
 import { ReqUser } from "../decorators";
-import { QueryParamsFactory } from "../dto";
+import { QueryParams, QueryParamsFactory } from "../dto";
 import { MikroCrudService, MikroCrudServiceFactory } from "../service";
 import { FACTORY, TS_TYPE } from "../symbols";
 import { ActionName, LookupableField, PkType } from "../types";
 import { MikroCrudControllerFactoryOptions } from "./mikro-crud-controller-factory-options.interface";
 import { MikroCrudController } from "./mikro-crud-controller.class";
-import { appendApiDecorators, listDto, queryParamsDto, queryParamsDtoList } from "./swagger.helper";
+import {
+  appendApiDecorators,
+  listDto,
+  queryParamsDto,
+  queryParamsDtoList,
+} from "./swagger.helper";
 
 type ServiceGenerics<Service> = Service extends MikroCrudService<
   infer Entity,
@@ -103,7 +110,14 @@ export class MikroCrudControllerFactory<
     return {
       ...options,
       params,
-      actions: actions ??  ["list" ,"create" ,"retrieve" ,"replace" ,"update" ,"destroy"],
+      actions: actions ?? [
+        "list",
+        "create",
+        "retrieve",
+        "replace",
+        "update",
+        "destroy",
+      ],
       lookup: {
         ...lookup,
         type:
@@ -138,6 +152,7 @@ export class MikroCrudControllerFactory<
     const {
       service,
       lookup: { field: lookupField },
+      actions,
     } = this.options;
 
     @UsePipes(new ValidationPipe(this.options.validationPipeOptions))
@@ -152,6 +167,49 @@ export class MikroCrudControllerFactory<
       declare readonly service: Service;
 
       readonly lookupField = lookupField;
+
+      async list(params: QueryParams<Entity>, user: any): Promise<unknown> {
+        return super.list(params, user);
+      }
+
+      async create(
+        params: QueryParams<Entity>,
+        data: CreateDto,
+        user: any
+      ): Promise<unknown> {
+        return super.create(params, data, user);
+      }
+
+      async retrieve(
+        lookup: FilterValue<ExpandProperty<Entity[LookupField]>>,
+        params: QueryParams<Entity>,
+        user: any
+      ): Promise<unknown> {
+        return super.retrieve(lookup, params, user);
+      }
+
+      async replace(
+        lookup: Entity[LookupField],
+        params: QueryParams<Entity>,
+        data: CreateDto,
+        user: any
+      ): Promise<unknown> {
+        return super.replace(lookup, params, data, user);
+      }
+
+      async update(
+        lookup: Entity[LookupField],
+        params: QueryParams<Entity>,
+        data: UpdateDto,
+        user: any
+      ): Promise<unknown> {
+        return super.update(lookup, params, data, user);
+
+      }
+
+      async destroy(lookup: Entity[LookupField], user: any): Promise<unknown> {
+          return super.destroy(lookup, user);
+      }
     }
 
     return Controller;
@@ -189,61 +247,77 @@ export class MikroCrudControllerFactory<
     > = {
       list: [
         appendApiDecorators([Get()], {
-          responses: [{
-            status: '2XX',
-            description: `Returns a list of ${service.entityClass.name}`,
-            type: listDto(service.entityClass),
-          }],
+          responses: [
+            {
+              status: "2XX",
+              description: `Returns a list of ${service.entityClass.name}`,
+              type: listDto(service.entityClass),
+            },
+          ],
         }),
         [queryParamsClass],
         [[Queries]],
       ],
-      create: [appendApiDecorators([Post()], {
-          responses: [{
-            status: '2XX',
-            description: `Create new ${service.entityClass.name}`,
-            type: service.entityClass,
-          }],
-        }), [queryParamsClass, dto.create], [[Queries], [Data]]],
+      create: [
+        appendApiDecorators([Post()], {
+          responses: [
+            {
+              status: "2XX",
+              description: `Create new ${service.entityClass.name}`,
+              type: service.entityClass,
+            },
+          ],
+        }),
+        [queryParamsClass, dto.create],
+        [[Queries], [Data]],
+      ],
       retrieve: [
         appendApiDecorators([Get(path)], {
-          responses: [{
-            status: '2XX',
-            description: `Retrieve ${service.entityClass.name} by ${lookupField}`,
-            type: service.entityClass,
-          }],
+          responses: [
+            {
+              status: "2XX",
+              description: `Retrieve ${service.entityClass.name} by ${lookupField}`,
+              type: service.entityClass,
+            },
+          ],
         }),
         [lookupInternalType, queryParamsClass],
         [[Lookup], [Queries]],
       ],
       replace: [
-         appendApiDecorators([Put(path)], {
-          responses: [{
-            status: '2XX',
-            description: `Replace ${service.entityClass.name} by ${lookupField}`,
-            type: service.entityClass,
-          }],
+        appendApiDecorators([Put(path)], {
+          responses: [
+            {
+              status: "2XX",
+              description: `Replace ${service.entityClass.name} by ${lookupField}`,
+              type: service.entityClass,
+            },
+          ],
         }),
         [lookupInternalType, queryParamsClass, dto.create],
         [[Lookup], [Queries], [Data]],
       ],
       update: [
-         appendApiDecorators([Patch(path)], {
-          responses: [{
-            status: '2XX',
-            description: `Update/patch ${service.entityClass.name} by ${lookupField}`,
-            type: service.entityClass,
-          }],
+        appendApiDecorators([Patch(path)], {
+          responses: [
+            {
+              status: "2XX",
+              description: `Update/patch ${service.entityClass.name} by ${lookupField}`,
+              type: service.entityClass,
+            },
+          ],
         }),
         [lookupInternalType, queryParamsClass, dto.update],
         [[Lookup], [Queries], [Data]],
       ],
       destroy: [
         appendApiDecorators([Delete(path), HttpCode(204)], {
-          responses: [{
-            status: '2XX',
-            description: `Delete ${service.entityClass.name} by ${lookupField}`,
-          }],
+          responses: [
+            {
+              status: "2XX",
+              description: `Delete ${service.entityClass.name} by ${lookupField}`,
+            },
+          ],
         }),
         [lookupInternalType],
         [[Lookup]],

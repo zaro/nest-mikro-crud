@@ -61,6 +61,11 @@ export function listDto<T=any>(dto: NestType<T>) {
         total!: number;
     }
 
+    Object.defineProperty(ListResponseDto, 'name', {
+      value: `${dto.name}ListResponseDto`,
+      configurable: false,
+      writable: false
+    });
     return ListResponseDto;
 }
 
