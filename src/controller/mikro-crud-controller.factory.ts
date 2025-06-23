@@ -27,7 +27,7 @@ import { AbstractFactory } from "../abstract.factory";
 import { ReqUser } from "../decorators";
 import { QueryParams, QueryParamsFactory } from "../dto";
 import { MikroCrudService, MikroCrudServiceFactory } from "../service";
-import { FACTORY, TS_TYPE } from "../symbols";
+import { FACTORY, TS_PARAM_TYPES, TS_TYPE } from "../symbols";
 import { ActionName, LookupableField, PkType } from "../types";
 import { MikroCrudControllerFactoryOptions } from "./mikro-crud-controller-factory-options.interface";
 import { MikroCrudController } from "./mikro-crud-controller.class";
@@ -211,7 +211,15 @@ export class MikroCrudControllerFactory<
           return super.destroy(lookup, user);
       }
     }
-
+    // Doesn't work at all, OpenAPi is messed up
+    // Proxy to super methods
+    // for(const action of actions){
+    //   const method = async function (this: Controller, ...args: any[]) {
+    //     return (MikroCrudController.prototype as any)[action].apply(this, args);
+    //   }
+    //   Controller.prototype[action]=method;
+    // }
+    
     return Controller;
   }
 
@@ -219,6 +227,7 @@ export class MikroCrudControllerFactory<
     const {
       lookup: { type: lookupType, name: lookupParamName, field: lookupField },
       service,
+      decorators = {},
     } = this.options;
     const lookupInternalType = lookupType == "number" ? Number : String;
 
@@ -329,8 +338,10 @@ export class MikroCrudControllerFactory<
       [methodDecorators, paramTypes, paramDecoratorSets],
     ] of Object.entries(table)) {
       const name = k as ActionName;
-      if (this.options.actions.includes(name))
-        this.applyMethodDecorators(name, ...methodDecorators);
+      if (this.options.actions.includes(name)){
+        const additionalDecorators = decorators[name] ?? [];
+        this.applyMethodDecorators(name, ...methodDecorators, ...additionalDecorators);
+      }
       this.defineParamTypes(
         name,
         ...paramTypes,

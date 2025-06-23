@@ -54,4 +54,10 @@ export interface MikroCrudControllerFactoryOptions<
    * - `transformOptions.exposeDefaultValues` will be forced to be `true`
    */
   validationPipeOptions?: ValidationPipeOptions;
+  /**
+   *  Additional decorators to be applied to each action
+   */
+  decorators?: {
+    [k in ActionName]? : MethodDecorator[];
+  }
 }

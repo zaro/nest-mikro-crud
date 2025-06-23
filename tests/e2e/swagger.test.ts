@@ -7,7 +7,12 @@ import { CreateBookDto, UpdateBookDto } from "./dtos";
 import { Book, Page } from "./entities";
 import { TestingModule } from "@nestjs/testing";
 import TestAgent from "supertest/lib/agent";
-import { SwaggerModule, DocumentBuilder, OpenAPIObject } from "@nestjs/swagger";
+import {
+  SwaggerModule,
+  DocumentBuilder,
+  OpenAPIObject,
+  ApiTags,
+} from "@nestjs/swagger";
 
 describe("Swagger", () => {
   let module: TestingModule;
@@ -34,22 +39,38 @@ describe("Swagger", () => {
   }).product {}
 
   @Controller("/book")
-  class TestController1 extends new MikroCrudControllerFactory({
+  class TestControllerBook extends new MikroCrudControllerFactory({
     service: TestService1,
     lookup: { field: "id" },
+    decorators: {
+      list: [ApiTags("tagBook")],
+      retrieve: [ApiTags("tagBook")],
+      create: [ApiTags("tagBook")],
+      replace: [ApiTags("tagBook")],
+      update: [ApiTags("tagBook")],
+      destroy: [ApiTags("tagBook")],
+    },
   }).product {}
 
   @Controller("/page")
-  class TestController2 extends new MikroCrudControllerFactory({
+  class TestControllerPage extends new MikroCrudControllerFactory({
     service: TestService2,
     lookup: { field: "id" },
+    decorators: {
+      list: [ApiTags("tagPage")],
+      retrieve: [ApiTags("tagPage")],
+      create: [ApiTags("tagPage")],
+      replace: [ApiTags("tagPage")],
+      update: [ApiTags("tagPage")],
+      destroy: [ApiTags("tagPage")],
+    },
   }).product {}
 
   beforeEach(async () => {
     let app;
     ({ app, module, requester } = await prepareE2E({
       imports: [MikroCrudModule],
-      controllers: [TestController1, TestController2],
+      controllers: [TestControllerBook, TestControllerPage],
       providers: [TestService1, TestService2],
     }));
     const options = new DocumentBuilder()
@@ -65,10 +86,10 @@ describe("Swagger", () => {
 
   describe("Check if OpenAPi", () => {
     describe.each`
-      entity           | path 
-      ${'Book'}        | ${'/book'} 
-      ${'Page'}        | ${'/page'} 
-    `("definition for $entity is correct", ({ entity, path}) => {
+      entity    | path
+      ${"Book"} | ${"/book"}
+      ${"Page"} | ${"/page"}
+    `("definition for $entity is correct", ({ entity, path }) => {
       it("response type should be defined", () => {
         // console.dir(openApi, { depth: null });
         expect(openApi.paths[path].get?.responses["2XX"]).toHaveProperty(
@@ -139,6 +160,12 @@ describe("Swagger", () => {
             }),
           ])
         );
+      });
+
+      it("Additional tags should be applied", () => {
+        for (const m of Object.values(openApi.paths[path])) {
+          expect(m.tags).toEqual([`TestController${entity}`, `tag${entity}`]);
+        }
       });
     });
   });
