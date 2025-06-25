@@ -61,11 +61,11 @@ export class QueryParamsFactory<
       limit? = limit?.default;
       @SwaggerApiProperty({type: 'number', required: false})
       offset? = offset?.default;
-      @SwaggerApiProperty({type: 'string', isArray: true, required: false})
+      @SwaggerApiProperty({name: 'order[]', type: 'string', isArray: true, required: false})
       order? = order?.default;
-      @SwaggerApiProperty({type: 'string', isArray: true, required: false})
+      @SwaggerApiProperty({name: 'filter[]',type: 'string', isArray: true, required: false})
       filter? = filter?.default;
-      @SwaggerApiProperty({type: 'string', isArray: true, required: false})
+      @SwaggerApiProperty({name: 'expand[]',type: 'string', isArray: true, required: false})
       expand? = expand?.default;
     };
     return QueryParamsImpl;

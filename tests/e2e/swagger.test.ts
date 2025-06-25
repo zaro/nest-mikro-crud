@@ -144,17 +144,17 @@ describe("Swagger", () => {
               in: "query",
             }),
             expect.objectContaining({
-              name: "order",
+              name: "order[]",
               required: false,
               in: "query",
             }),
             expect.objectContaining({
-              name: "filter",
+              name: "filter[]",
               required: false,
               in: "query",
             }),
             expect.objectContaining({
-              name: "expand",
+              name: "expand[]",
               required: false,
               in: "query",
             }),
