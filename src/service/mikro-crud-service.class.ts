@@ -198,7 +198,7 @@ export abstract class MikroCrudService<
             digIn(reference.getEntity(), relationPath);
             reference.populated(true);
           }
-        } else {
+        } else if(value) {
           const entity: AnyEntity<unknown> = value;
           const wrappedEntity = wrap(entity);
           if (!shouldPopulate) {
