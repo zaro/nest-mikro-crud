@@ -1,6 +1,11 @@
 import { AnyEntity, EntityData, RequiredEntityData } from '@mikro-orm/core';
 import { Type } from '@nestjs/common';
 
+export type PersistFunction<Entity, CreateDto, UpdateDto> = (
+  data: CreateDto | UpdateDto,
+  user?: any,
+) => void;
+
 export interface MikroCrudServiceFactoryOptions<
   Entity extends AnyEntity<Entity> = any,
   CreateDto extends RequiredEntityData<Entity> = RequiredEntityData<Entity>,
@@ -18,4 +23,5 @@ export interface MikroCrudServiceFactoryOptions<
     create: Type<CreateDto>;
     update: Type<UpdateDto>;
   };
+  persist?: PersistFunction<Entity, CreateDto, UpdateDto>;
 }

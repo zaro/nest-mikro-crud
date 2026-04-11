@@ -33,6 +33,13 @@ export async function prepareE2E(
 
   const app = await module.createNestApplication<NestExpressApplication>().init();
   app.set('query parser', 'extended');
+  app.useGlobalGuards({
+    canActivate(ctx) {
+      const request = ctx.switchToHttp().getRequest();
+      request.user = { id: 111 };
+      return true;
+    }
+  });
   const requester = supertest(app.getHttpServer());
 
   return { module, app, requester };

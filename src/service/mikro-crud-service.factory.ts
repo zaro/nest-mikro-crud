@@ -39,7 +39,7 @@ export class MikroCrudServiceFactory<
   }
 
   protected create(): ServiceType<MikroCrudService<Entity, CreateDto, UpdateDto>> {
-    const { entity: entityClass } = this.options;
+    const { entity: entityClass, persist } = this.options;
 
     class Service extends MikroCrudService<Entity, CreateDto, UpdateDto> {
       static readonly entityClass = entityClass;
@@ -55,6 +55,9 @@ export class MikroCrudServiceFactory<
               kind == ReferenceKind.MANY_TO_MANY),
         )
         .map(({ name }) => name  as unknown as AutoPath<Entity, string>) as unknown as Populate<Entity>;
+
+      readonly persist = persist;
+        
     }
 
     return Service;

@@ -14,7 +14,7 @@ import {
   RequiredEntityData,
 } from '@mikro-orm/core';
 import { Inject } from '@nestjs/common';
-import { FilterQueryParam, OrderQueryParam, PopulateParameters, RelationPath } from '..';
+import { FilterQueryParam, OrderQueryParam, PersistFunction, PopulateParameters, RelationPath } from '..';
 import type { EntityFilters } from '../providers/entity-filters.interface';
 import { ENTITY_FILTERS } from '../providers/entity-filters.token';
 import { QueryParser } from '../providers/query-parser.service';
@@ -26,6 +26,7 @@ export abstract class MikroCrudService<
 > {
   declare readonly repository: EntityRepository<Entity>;
   readonly collectionFields!: PopulateParameters<Entity>;
+  readonly persist?: PersistFunction<Entity, CreateDto, UpdateDto>;
 
   @Inject()
   protected readonly parser!: QueryParser<Entity>;
@@ -85,7 +86,10 @@ export abstract class MikroCrudService<
     return { total, results };
   }
 
-  async create({ data }: { data: CreateDto; user?: any }): Promise<Entity> {
+  async create({ data, user }: { data: CreateDto; user?: any }): Promise<Entity> {
+    if(this.persist) {
+      this.persist(data, user);
+    }
     const entity = this.repository.create(data);
     this.repository.getEntityManager().persist(entity);
     return entity;
@@ -112,22 +116,30 @@ export abstract class MikroCrudService<
   async replace({
     entity,
     data,
+    user,
   }: {
     entity: Entity;
     data: CreateDto;
     user?: any;
   }): Promise<Partial<Entity>> {
+    if(this.persist) {
+      this.persist(data, user);
+    }
     return wrap(entity).assign(data as any, { merge: true });
   }
 
   async update({
     entity,
     data,
+    user,
   }: {
     entity: Entity;
     data: UpdateDto;
     user?: any;
   }): Promise<Partial<Entity>> {
+    if(this.persist) {
+      this.persist(data, user);
+    }
     return wrap(entity).assign(data as any, { merge: true });
   }
 
