@@ -62,7 +62,6 @@ describe("Entity Filter", () => {
     },
     persist: (data, user) => {
       data.owner = user.id;
-      console.log("Persist function  data:", data);
     }
   }).product {}
 
