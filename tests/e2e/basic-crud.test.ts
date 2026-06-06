@@ -20,11 +20,13 @@ describe("Basic CRUD", () => {
   let entity: Book;
 
   function assertEntityFieldTypes({ entity }: { entity: Book }) {
-    const { id, name, alias, price, pages, summary, ...more } = entity;
+    const { id, name, alias, price, pages, summary, favorite, ...more } = entity;
     expect(typeof id).toBe("number");
     expect(typeof name).toBe("string");
+    expect(typeof favorite).toBe("boolean");
     expect(alias).toBe(null);
     expect(price).toBeUndefined();
+    expect(favorite).toBe(false);
     expect(pages).toBeInstanceOf(Array);
     [...pages].forEach((page) => expect(typeof page).toBe("number"));
     expect(typeof summary).toBe("number");
@@ -181,7 +183,7 @@ describe("Basic CRUD", () => {
 
   describe("/:lookup/ (PUT)", () => {
     beforeEach(() => {
-      createBookDto = { name: "updated", price: 123, summary: 1 };
+      createBookDto = { name: "updated", price: 123, summary: 1, favorite: false };
     });
 
     describe("Common", () => {

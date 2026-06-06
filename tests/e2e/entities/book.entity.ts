@@ -28,6 +28,11 @@ export class Book {
   })
   price!: number;
 
+  @Property({
+    default: false,
+  })
+  favorite!: boolean;
+
   @OneToMany({
     entity: () => Page,
     mappedBy: (page) => page.book,

@@ -140,7 +140,7 @@ export abstract class MikroCrudService<
     if(this.persist) {
       this.persist(data, user);
     }
-    return wrap(entity).assign(data as any, { merge: true });
+    return wrap(entity).assign(data as any, { merge: true , ignoreUndefined: true });
   }
 
   async destroy({ entity }: { entity: Entity; user?: any }): Promise<Entity> {
