@@ -244,6 +244,73 @@ describe("Query Params", () => {
     });
   });
 
+  describe("Or", () => {
+    @Controller()
+    class TestController extends new MikroCrudControllerFactory<TestService>({
+      service: TestService,
+      actions: ["list"],
+      lookup: { field: "id" },
+      params: new QueryParamsFactory<Book>({
+        filter: {
+          in: ["id", "name", "summary.text"],
+        },
+      }).product,
+    }).product {}
+
+    beforeEach(async () => {
+      await prepare(TestController);
+    });
+    afterEach(async () => {
+      await module.close();
+    });
+
+    describe("/ (GET)", () => {
+      describe.each`
+        queries                                               | count | firstId
+        ${{ "or[]": ["id|eq:1", "id|eq:2"] }}                 | ${2}  | ${1}
+        ${{ "or[]": ["id|eq:3"] }}                            | ${1}  | ${3}
+        ${{ "or[]": ["id|eq:1", "id|eq:5"] }}                 | ${2}  | ${1}
+        ${{ "or[]": ["name|eq:parent2", "name|eq:parent4"] }} | ${2}  | ${2}
+        ${{ "or[]": ["id|gt:3", "id|lt:2"] }}                 | ${3}  | ${4}
+        ${{ "or[]": ["id|ne:"] }}                             | ${5}  | ${1}
+        ${{ "or[]": ["id|in:1,3,5"] }}                        | ${3}  | ${1}
+      `("Legal Or: $queries", ({ queries, count, firstId }) => {
+        beforeEach(async () => {
+          response = await requester.get("/").query(queries);
+        });
+
+        it(`should make the results have length ${count}`, () => {
+          expect(response.body.results).toHaveLength(count);
+        });
+
+        it(`should make the first id ${firstId}`, () => {
+          entity = response.body.results[0];
+          expect(entity?.id).toBe(firstId);
+        });
+      });
+
+      describe.each`
+        filterQueries                   | orQueries                              | count | expected
+        ${{ "filter[]": ["id|gt:2"] }}  | ${{ "or[]": ["id|eq:1", "id|eq:4"] }}  | ${1}  | ${[4]}
+        ${{ "filter[]": ["id|lt:5"] }}  | ${{ "or[]": ["id|eq:1", "id|eq:5"] }}  | ${1}  | ${[1]}
+        ${{ "filter[]": ["name|in:parent1,parent2,parent3"] }} | ${{ "or[]": ["id|eq:2"] }} | ${1} | ${[2]}
+      `("AND + OR: $filterQueries + $orQueries", ({ filterQueries, orQueries, count, expected }) => {
+        beforeEach(async () => {
+          response = await requester.get("/").query({ ...filterQueries, ...orQueries });
+        });
+
+        it(`should return ${count} results`, () => {
+          expect(response.body.results).toHaveLength(count);
+        });
+
+        it(`should return entities with ids ${JSON.stringify(expected)}`, () => {
+          const ids = response.body.results.map((r: Book) => r.id);
+          expect(ids.sort()).toEqual(expected.sort());
+        });
+      });
+    });
+  });
+
   describe("Expand", () => {
     @Controller()
     class TestController extends new MikroCrudControllerFactory<TestService>({

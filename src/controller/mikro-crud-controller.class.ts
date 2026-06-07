@@ -31,7 +31,7 @@ export abstract class MikroCrudController<
   readonly lookupField!: LookupField;
 
   async list(
-    { limit, offset, order, filter, expand }: QueryParams<Entity>,
+    { limit, offset, order, filter, or, expand }: QueryParams<Entity>,
     user: any,
   ): Promise<unknown> {
     const { total, results } = await this.service.list({
@@ -39,6 +39,7 @@ export abstract class MikroCrudController<
       offset,
       order,
       filter,
+      or,
       expand,
       user,
     });

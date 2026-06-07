@@ -32,6 +32,7 @@ describe(QueryParamsFactory.name, () => {
           offset: 2,
           order: ["id:asc"],
           filter: ["id|eq:1"],
+          or: undefined,
         });
       });
     });
@@ -62,6 +63,11 @@ describe(QueryParamsFactory.name, () => {
       ${"filter"} | ${["iiii|eq:1"]}
       ${"filter"} | ${["id|eqqq:1"]}
       ${"filter"} | ${"notanarray"}
+      ${"or"}     | ${["illegal"]}
+      ${"or"}     | ${["   id|eq:1"]}
+      ${"or"}     | ${["iiii|eq:1"]}
+      ${"or"}     | ${["id|eqqq:1"]}
+      ${"or"}     | ${"notanarray"}
     `(
       "should throw an error when `$name` is $value",
       async ({ name, value }) => {
@@ -77,6 +83,7 @@ describe(QueryParamsFactory.name, () => {
       ${"offset"} | ${1}
       ${"order"}  | ${["id:asc"]}
       ${"filter"} | ${["id|eq:"]}
+      ${"or"}     | ${["id|eq:"]}
     `(
       "should pass the validation when $name is $value",
       async ({ name, value }) => {

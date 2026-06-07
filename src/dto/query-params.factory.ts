@@ -13,7 +13,7 @@ import {
 import { FILTER_OPERATORS } from "..";
 import { AbstractFactory } from "../abstract.factory";
 import { FACTORY } from "../symbols";
-import { OrderQueryParam } from "../types";
+import { FilterQueryParam, OrderQueryParam } from "../types";
 import { QueryParamsFactoryOptions } from "./query-params-factory-options.interface";
 import { QueryParams } from "./query-params.interface";
 import { SwaggerApiProperty } from "../controller/swagger.helper";
@@ -65,6 +65,8 @@ export class QueryParamsFactory<
       order? = order?.default;
       @SwaggerApiProperty({name: 'filter[]',type: 'string', isArray: true, required: false})
       filter? = filter?.default;
+      @SwaggerApiProperty({name: 'or[]',type: 'string', isArray: true, required: false})
+      or?: FilterQueryParam<Entity>[];
       @SwaggerApiProperty({name: 'expand[]',type: 'string', isArray: true, required: false})
       expand? = expand?.default;
     };
@@ -116,6 +118,19 @@ export class QueryParamsFactory<
         )
       );
 
+    if (filter)
+      this.defineType("or", Array).applyPropertyDecorators(
+        "or",
+        Type(() => String),
+        IsOptional(),
+        IsArray(),
+        Matches(
+          `^(${filter.in.join("|")})\\|(${FILTER_OPERATORS.join("|")}):.*$`,
+          undefined,
+          { each: true }
+        )
+      );
+
     if (expand)
       this.defineType("expand", Array).applyPropertyDecorators(
         "expand",
@@ -134,5 +149,6 @@ export class QueryParamsFactory<
     ];
     for (const name of names)
       if (!this.options[name]) this.applyPropertyDecorators(name, Exclude());
+    if (!this.options.filter) this.applyPropertyDecorators("or", Exclude());
   }
 }

@@ -5,7 +5,7 @@
 # Features
 
 - [**Super strong template literal types and generic types**](#creating-the-controller)
-- Common query parameters implemented (limit, offset, order, filter)
+- Common query parameters implemented (limit, offset, order, filter, or)
 - Methods are designed to be extensible and composable
 - Production security problems considered
 - Code well tested
@@ -115,7 +115,7 @@ export class BooksController extends new MikroCrudControllerFactory<BooksService
 ).product {}
 ```
 
-**NOTE**: _order_ and _filter_ param should always be arrays in the url like `/?order[]=&filter[]=`
+**NOTE**: _order_, _filter_ and _or_ param should always be arrays in the url like `/?order[]=&filter[]=&or[]=`
 
 #### Available Filter Operators:
 
@@ -133,6 +133,34 @@ export class BooksController extends new MikroCrudControllerFactory<BooksService
 | ilike    | Insensitive Like      |
 | isnull   | Is Null               |
 | notnull  | Not Null              |
+
+#### OR Filtering
+
+Use the `or[]` query param to combine multiple filter conditions with **OR** logic. Each `or[]` value uses the exact same syntax as `filter[]` (`path|operator:value`). All `or[]` values are OR-ed together into a single `$or` branch, which is then AND-ed with any `filter[]` conditions.
+
+```
+GET /api/books?or[]=name|eq:foo&or[]=price|gt:100
+```
+
+Result: `(name = "foo" OR price > 100)`
+
+**Combining AND + OR:**
+
+```
+GET /api/books?filter[]=status|eq:active&or[]=id|eq:1&or[]=id|eq:2
+```
+
+Result: `status = "active" AND (id = 1 OR id = 2)`
+
+**OR with cross-field conditions:**
+
+```
+GET /api/books?or[]=author.name|eq:John&or[]=price|lt:10
+```
+
+Result: `(author.name = "John" OR price < 10)`
+
+The `or[]` param reuses the same `filter.in` allowlist to validate which fields can be queried. It is only available when `filter` is configured in the query DTO.
 
 ## Excluding Fields from the Response
 

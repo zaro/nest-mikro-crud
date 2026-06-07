@@ -58,6 +58,7 @@ export abstract class MikroCrudService<
     offset,
     order = [],
     filter = [],
+    or = [],
     expand = [],
     refresh,
     user,
@@ -67,13 +68,26 @@ export abstract class MikroCrudService<
     offset?: number;
     order?: OrderQueryParam<Entity>[];
     filter?: FilterQueryParam<Entity>[];
+    or?: FilterQueryParam<Entity>[];
     expand?: PopulateParameters<Entity>;
     refresh?: boolean;
     user?: any;
   }) {
     const filterConditions = await this.parser.parseFilter({ filter });
+    const orCondition = or.length
+      ? await this.parser.parseOrFilter({ or })
+      : undefined;
+    const andConditions: FilterQuery<Entity>[] = [];
+    if (Object.keys(conditions).length) andConditions.push(conditions);
+    if (Object.keys(filterConditions).length) andConditions.push(filterConditions);
+    if (orCondition) andConditions.push(orCondition);
+    const query: FilterQuery<Entity> = andConditions.length === 0
+      ? {}
+      : andConditions.length === 1
+      ? andConditions[0]
+      : { $and: andConditions } as FilterQuery<Entity>;
     const [results, total] = await this.repository.findAndCount(
-      { $and: [conditions, filterConditions] } as FilterQuery<Entity>,
+      query,
       {
         limit,
         offset,

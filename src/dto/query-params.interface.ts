@@ -6,5 +6,6 @@ export interface QueryParams<Entity extends AnyEntity<Entity> = any> {
   offset?: number;
   order?: OrderQueryParam<Entity>[];
   filter?: FilterQueryParam<Entity>[];
+  or?: FilterQueryParam<Entity>[];
   expand?: PopulateParameters<Entity>;
 }
