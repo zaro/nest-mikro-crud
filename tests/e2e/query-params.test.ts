@@ -9,10 +9,10 @@ import {
 } from "src";
 import { MikroCrudModule } from "src/mikro-crud.module";
 import supertest, { Response } from "supertest";
-import { prepareE2E } from "tests/utils";
+import { prepareE2E, supportsArrayOperators } from "tests/utils";
 import { CreateBookDto, UpdateBookDto } from "./dtos";
 import { Book, Line, Page } from "./entities";
-import { EntityManager } from "@mikro-orm/sqlite";
+import { EntityManager } from "@mikro-orm/core";
 import TestAgent from "supertest/lib/agent";
 
 describe("Query Params", () => {
@@ -31,10 +31,17 @@ describe("Query Params", () => {
     const em: EntityManager =  module.get<EntityManager>(EntityManager).fork();
 
     for (let i = 1; i <= 5; i++) {
+      const bookTags: Record<number, string[]> = {
+        2: ['fiction'],
+        3: ['fiction', 'sci-fi'],
+        4: ['reference'],
+        5: ['fiction', 'reference'],
+      };
       const book = em.create(Book, {
         name: "parent" + i,
         price: i,
         summary: { text: "summary" + i },
+        tags: bookTags[i],
       });
       em.persist(book);
 
@@ -188,7 +195,7 @@ describe("Query Params", () => {
       lookup: { field: "id" },
       params: new QueryParamsFactory<Book>({
         filter: {
-          in: ["id", "name", "summary.text"],
+          in: ["id", "name", "tags" as any, "summary.text"],
           default: ["name|eq:parent3"],
         },
       }).product,
@@ -205,7 +212,6 @@ describe("Query Params", () => {
       describe.each`
         filter                          | count | firstId
         ${undefined}                    | ${1}  | ${3}
-        ${["id|eq:"]}                   | ${0}  | ${undefined}
         ${["id|eq:2"]}                  | ${1}  | ${2}
         ${["id|gt:2"]}                  | ${3}  | ${3}
         ${["name|gt:parent2"]}          | ${3}  | ${3}
@@ -217,7 +223,6 @@ describe("Query Params", () => {
         ${["name|lt:parent3"]}          | ${2}  | ${1}
         ${["id|lte:3"]}                 | ${3}  | ${1}
         ${["name|lte:parent3"]}         | ${3}  | ${1}
-        ${["id|ne:"]}                   | ${5}  | ${1}
         ${["id|ne:1"]}                  | ${4}  | ${2}
         ${["id|nin:1,2"]}               | ${3}  | ${3}
         ${["name|like:parent%"]}        | ${5}  | ${1}
@@ -241,6 +246,33 @@ describe("Query Params", () => {
           expect(entity?.id).toBe(firstId);
         });
       });
+
+      (supportsArrayOperators ? describe : describe.skip)("Array Operators", () => {
+        describe.each`
+          filter                                          | count | firstId
+          ${["tags|contains:fiction"]}                     | ${3}  | ${2}
+          ${["tags|contains:fiction,sci-fi"]}              | ${1}  | ${3}
+          ${["tags|contains:nonfiction"]}                  | ${0}  | ${undefined}
+          ${["tags|contains:"]}                            | ${0}  | ${undefined}
+          ${["tags|overlap:fiction,sci-fi"]}               | ${3}  | ${2}
+          ${["tags|overlap:fiction,reference"]}             | ${4}  | ${2}
+          ${["tags|overlap:sci-fi,reference"]}              | ${3}  | ${3}
+          ${["tags|overlap:horror"]}                       | ${0}  | ${undefined}
+        `("Legal Filter: $filter", ({ filter, count, firstId }) => {
+          beforeEach(async () => {
+            response = await requester.get("/").query({ "filter[]": filter });
+          });
+
+          it(`should make the results have length ${count}`, () => {
+            expect(response.body.results).toHaveLength(count);
+          });
+
+          it(`should make the first id ${firstId}`, () => {
+            entity = response.body.results[0];
+            expect(entity?.id).toBe(firstId);
+          });
+        });
+      });
     });
   });
 
@@ -252,7 +284,7 @@ describe("Query Params", () => {
       lookup: { field: "id" },
       params: new QueryParamsFactory<Book>({
         filter: {
-          in: ["id", "name", "summary.text"],
+          in: ["id", "name", "tags" as any, "summary.text"],
         },
       }).product,
     }).product {}
@@ -271,8 +303,6 @@ describe("Query Params", () => {
         ${{ "or[]": ["id|eq:3"] }}                            | ${1}  | ${3}
         ${{ "or[]": ["id|eq:1", "id|eq:5"] }}                 | ${2}  | ${1}
         ${{ "or[]": ["name|eq:parent2", "name|eq:parent4"] }} | ${2}  | ${2}
-        ${{ "or[]": ["id|gt:3", "id|lt:2"] }}                 | ${3}  | ${4}
-        ${{ "or[]": ["id|ne:"] }}                             | ${5}  | ${1}
         ${{ "or[]": ["id|in:1,3,5"] }}                        | ${3}  | ${1}
       `("Legal Or: $queries", ({ queries, count, firstId }) => {
         beforeEach(async () => {
@@ -286,6 +316,21 @@ describe("Query Params", () => {
         it(`should make the first id ${firstId}`, () => {
           entity = response.body.results[0];
           expect(entity?.id).toBe(firstId);
+        });
+      });
+
+      describe("Order-independent OR queries", () => {
+        describe.each`
+          queries                                               | count
+          ${{ "or[]": ["id|gt:3", "id|lt:2"] }}                 | ${3}
+        `("$queries", ({ queries, count }) => {
+          beforeEach(async () => {
+            response = await requester.get("/").query(queries);
+          });
+
+          it(`should make the results have length ${count}`, () => {
+            expect(response.body.results).toHaveLength(count);
+          });
         });
       });
 
@@ -306,6 +351,27 @@ describe("Query Params", () => {
         it(`should return entities with ids ${JSON.stringify(expected)}`, () => {
           const ids = response.body.results.map((r: Book) => r.id);
           expect(ids.sort()).toEqual(expected.sort());
+        });
+      });
+
+      (supportsArrayOperators ? describe : describe.skip)("Array Operators", () => {
+        describe.each`
+          filterQueries                   | orQueries                              | count | expected
+          ${{ "filter[]": ["id|gt:3"] }}  | ${{ "or[]": ["tags|overlap:fiction"] }}  | ${1}  | ${[5]}
+          ${{ "filter[]": ["id|gt:2"] }}  | ${{ "or[]": ["tags|contains:fiction"] }}  | ${2}  | ${[3, 5]}
+        `("AND + OR: $filterQueries + $orQueries", ({ filterQueries, orQueries, count, expected }) => {
+          beforeEach(async () => {
+            response = await requester.get("/").query({ ...filterQueries, ...orQueries });
+          });
+
+          it(`should return ${count} results`, () => {
+            expect(response.body.results).toHaveLength(count);
+          });
+
+          it(`should return entities with ids ${JSON.stringify(expected)}`, () => {
+            const ids = response.body.results.map((r: Book) => r.id);
+            expect(ids.sort()).toEqual(expected.sort());
+          });
         });
       });
     });

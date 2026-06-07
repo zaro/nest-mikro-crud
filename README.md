@@ -133,6 +133,10 @@ export class BooksController extends new MikroCrudControllerFactory<BooksService
 | ilike    | Insensitive Like      |
 | isnull   | Is Null               |
 | notnull  | Not Null              |
+| contains | Array Contains (all values present) |
+| overlap  | Array Overlap (any value present)   |
+
+**NOTE**: `contains` and `overlap` are PostgreSQL-only (map to `@>` and `&&` operators). They require `@mikro-orm/postgresql` and can be tested with `yarn test:pg` (uses testcontainers). SQLite and MySQL do not support array containment queries.
 
 #### OR Filtering
 

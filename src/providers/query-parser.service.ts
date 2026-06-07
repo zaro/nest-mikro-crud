@@ -35,7 +35,7 @@ export class QueryParser<Entity> {
     if (rawOp == 'isnull') fieldConditions.$eq = null;
     else if (rawOp == 'notnull') fieldConditions.$ne = null;
     else {
-      if (rawOp == 'in' || rawOp == 'nin')
+      if (rawOp == 'in' || rawOp == 'nin' || rawOp == 'contains' || rawOp == 'overlap')
         fieldConditions[`$${rawOp}` as const] = parseMultiValues();
       else fieldConditions[`$${rawOp}` as const] = value;
     }

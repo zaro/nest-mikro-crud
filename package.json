@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "jest",
+    "test:pg": "TEST_DB=pg jest --runInBand",
     "prebuild": "rimraf lib",
     "build": "tsc -b"
   },
@@ -47,6 +48,7 @@
   "devDependencies": {
     "@mikro-orm/core": "^6.4.16",
     "@mikro-orm/nestjs": "^6.1.1",
+    "@mikro-orm/postgresql": "6.4.16",
     "@mikro-orm/sqlite": "^6.4.16",
     "@nestjs/common": "^11.0.5",
     "@nestjs/core": "^11.0.5",
@@ -54,6 +56,7 @@
     "@nestjs/platform-express": "^11.0.5",
     "@nestjs/swagger": "^11.2.0",
     "@nestjs/testing": "^11.0.5",
+    "@testcontainers/postgresql": "^10.0.0",
     "@types/express": "^5.0.3",
     "@types/jest": "^29.5.12",
     "@types/supertest": "^6.0.3",
@@ -66,6 +69,7 @@
     "rxjs": "^7.8.1",
     "sqlite3": "^5.1.7",
     "supertest": "^7.1.1",
+    "testcontainers": "^10.0.0",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"

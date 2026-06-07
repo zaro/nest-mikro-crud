@@ -14,7 +14,7 @@ import { MikroCrudModule } from "src/mikro-crud.module";
 import supertest, { Response } from "supertest";
 import { prepareE2E } from "tests/utils";
 import { CreateBookDto, UpdateBookDto } from "./dtos";
-import { EntityManager } from "@mikro-orm/sqlite";
+import { EntityManager } from "@mikro-orm/core";
 import TestAgent from "supertest/lib/agent";
 import { IsInt, IsOptional } from "class-validator";
 import { Type } from "class-transformer";
@@ -27,7 +27,7 @@ export class Filtered extends BaseEntity {
   id!: number;
 
   @Property({nullable: true})
-  owner!: number;
+  owner?: number;
 }
 
 export class CreateFilteredDto {
@@ -35,7 +35,7 @@ export class CreateFilteredDto {
   @Type()
   @IsOptional()
   @IsInt()
-  owner!: number;
+  owner?: number;
 }
 
 
@@ -73,6 +73,8 @@ describe("Entity Filter", () => {
     requestUser: { decorators: [RequestUser()] },
   }).product {}
 
+  let filteredPKey: number ;
+
   beforeEach(async () => {
     ({ module, requester, app } = await prepareE2E(
       {
@@ -85,13 +87,14 @@ describe("Entity Filter", () => {
 
 
     const em: EntityManager =  module.get<EntityManager>(EntityManager).fork();
-    
+    filteredPKey = 0;
     for (let i = 1; i <= 2; i++) {
-      const entity = new Filtered().assign({ id: i });
-      await em.persist(entity);
+      const entity = em.create(Filtered, { id: ++filteredPKey });
+      em.persist(entity);
     }
-    em.flush();
+    await em.flush();
   });
+  
   afterEach(async () => {   
       await module.close();
   });
@@ -113,6 +116,7 @@ describe("Entity Filter", () => {
 
     beforeEach(async () => {
       response = await requester.post("/").send({
+        id: ++filteredPKey
       });
     });
 

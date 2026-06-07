@@ -1,4 +1,5 @@
 import {
+  ArrayType,
   Cascade,
   Collection,
   Entity,
@@ -32,6 +33,12 @@ export class Book {
     default: false,
   })
   favorite!: boolean;
+
+  @Property({
+    type: ArrayType,
+    nullable: true,
+  })
+  tags?: string[];
 
   @OneToMany({
     entity: () => Page,

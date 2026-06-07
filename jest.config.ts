@@ -7,6 +7,8 @@ const config : Config ={
   testEnvironment: "node",
   clearMocks: true,
   restoreMocks: true,
+  globalSetup: "<rootDir>/tests/jest-global-setup.ts",
+  globalTeardown: "<rootDir>/tests/jest-global-teardown.ts",
   ...createJsWithTsPreset({
     tsconfig: 'tests/tsconfig.json',
   }),

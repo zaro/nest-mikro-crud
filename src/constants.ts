@@ -11,4 +11,6 @@ export const FILTER_OPERATORS = [
   "ilike",
   "isnull",
   "notnull",
+  "contains",
+  "overlap",
 ] as const;

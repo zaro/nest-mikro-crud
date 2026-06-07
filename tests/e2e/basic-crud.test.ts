@@ -8,7 +8,7 @@ import supertest, { Response } from "supertest";
 import { prepareE2E } from "../utils";
 import { CreateBookDto, UpdateBookDto } from "./dtos";
 import { Book, Page, Summary } from "./entities";
-import { EntityManager } from "@mikro-orm/sqlite";
+import { EntityManager } from "@mikro-orm/core";
 import TestAgent from "supertest/lib/agent";
 
 describe("Basic CRUD", () => {
@@ -20,7 +20,7 @@ describe("Basic CRUD", () => {
   let entity: Book;
 
   function assertEntityFieldTypes({ entity }: { entity: Book }) {
-    const { id, name, alias, price, pages, summary, favorite, ...more } = entity;
+    const { id, name, alias, price, pages, summary, favorite, tags, ...more } = entity;
     expect(typeof id).toBe("number");
     expect(typeof name).toBe("string");
     expect(typeof favorite).toBe("boolean");
@@ -56,7 +56,7 @@ describe("Basic CRUD", () => {
       providers: [TestService],
     }));
 
-    const em: EntityManager =  module.get<EntityManager>(EntityManager).fork();
+    const em: EntityManager = module.get<EntityManager>(EntityManager).fork();
 
     for (let i = 1; i <= 5; i++) {
       const book = em.create(Book, {
@@ -86,7 +86,7 @@ describe("Basic CRUD", () => {
       })
     );
 
-    em.flush();
+    await em.flush();
   });
 
   afterEach(async () => {
